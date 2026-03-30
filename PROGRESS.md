@@ -11,7 +11,7 @@
 - [x] 2. Настройка Supabase (schema + RLS + seed categories)
 - [x] 3. Auth (login / register / logout)
 - [x] 4. Layout (Sidebar + Header + роуты)
-- [ ] 5. shared/ui базовые компоненты (Button, Input, Card, Badge, Modal)
+- [x] 5. shared/ui базовые компоненты (Button, Input, Card, Badge, Modal)
 
 ## Фаза 2 — Транзакции
 

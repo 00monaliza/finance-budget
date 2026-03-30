@@ -3,8 +3,9 @@ import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
 import { AppLayout } from './layouts/AppLayout';
 
-const LoginPage    = lazy(() => import('@/pages/auth/LoginPage'));
-const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
+const LoginPage           = lazy(() => import('@/pages/auth/LoginPage'));
+const RegisterPage        = lazy(() => import('@/pages/auth/RegisterPage'));
+const AddTransactionPage  = lazy(() => import('@/pages/transactions/AddTransactionPage'));
 
 function LoadingScreen() {
   return (
@@ -57,7 +58,7 @@ export function AppRouter() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard"        element={<PlaceholderPage title="Dashboard" />} />
             <Route path="/transactions"     element={<PlaceholderPage title="Транзакции" />} />
-            <Route path="/transactions/new" element={<PlaceholderPage title="Новая транзакция" />} />
+            <Route path="/transactions/new" element={<AddTransactionPage />} />
             <Route path="/budgets"          element={<PlaceholderPage title="Бюджеты" />} />
             <Route path="/analytics"        element={<PlaceholderPage title="Аналитика" />} />
             <Route path="/goals"            element={<PlaceholderPage title="Цели" />} />
