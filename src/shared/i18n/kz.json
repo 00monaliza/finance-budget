@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "dashboard": "Басты бет",
+    "transactions": "Транзакциялар",
+    "budgets": "Бюджеттер",
+    "analytics": "Аналитика",
+    "goals": "Мақсаттар",
+    "ai": "AI Кеңесші",
+    "settings": "Параметрлер"
+  },
+  "common": {
+    "save": "Сақтау",
+    "cancel": "Бас тарту",
+    "delete": "Жою",
+    "edit": "Өңдеу",
+    "add": "Қосу",
+    "loading": "Жүктелуде...",
+    "error": "Қате",
+    "success": "Сәтті"
+  },
+  "transaction": {
+    "income": "Кіріс",
+    "expense": "Шығыс",
+    "transfer": "Аудару",
+    "addTitle": "Транзакция қосу",
+    "amount": "Сома",
+    "category": "Санат",
+    "description": "Сипаттама",
+    "date": "Күні",
+    "account": "Шот"
+  },
+  "auth": {
+    "login": "Кіру",
+    "register": "Тіркелу",
+    "logout": "Шығу",
+    "email": "Email",
+    "password": "Құпия сөз",
+    "name": "Аты"
+  }
+}

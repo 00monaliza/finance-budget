@@ -1,0 +1,40 @@
+{
+  "nav": {
+    "dashboard": "Главная",
+    "transactions": "Транзакции",
+    "budgets": "Бюджеты",
+    "analytics": "Аналитика",
+    "goals": "Цели",
+    "ai": "AI Советник",
+    "settings": "Настройки"
+  },
+  "common": {
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "add": "Добавить",
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успешно"
+  },
+  "transaction": {
+    "income": "Доход",
+    "expense": "Расход",
+    "transfer": "Перевод",
+    "addTitle": "Добавить транзакцию",
+    "amount": "Сумма",
+    "category": "Категория",
+    "description": "Описание",
+    "date": "Дата",
+    "account": "Счёт"
+  },
+  "auth": {
+    "login": "Войти",
+    "register": "Регистрация",
+    "logout": "Выйти",
+    "email": "Email",
+    "password": "Пароль",
+    "name": "Имя"
+  }
+}
