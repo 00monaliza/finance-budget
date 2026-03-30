@@ -8,6 +8,7 @@ const RegisterPage        = lazy(() => import('@/pages/auth/RegisterPage'));
 const TransactionsPage    = lazy(() => import('@/pages/transactions/TransactionsPage'));
 const AddTransactionPage  = lazy(() => import('@/pages/transactions/AddTransactionPage'));
 const ImportCSVPage       = lazy(() => import('@/pages/settings/ImportCSVPageRoute'));
+const BudgetsPage         = lazy(() => import('@/pages/budgets/BudgetsPage'));
 
 function LoadingScreen() {
   return (
@@ -61,7 +62,7 @@ export function AppRouter() {
             <Route path="/dashboard"        element={<PlaceholderPage title="Dashboard" />} />
             <Route path="/transactions"     element={<TransactionsPage />} />
             <Route path="/transactions/new" element={<AddTransactionPage />} />
-            <Route path="/budgets"          element={<PlaceholderPage title="Бюджеты" />} />
+            <Route path="/budgets"          element={<BudgetsPage />} />
             <Route path="/analytics"        element={<PlaceholderPage title="Аналитика" />} />
             <Route path="/goals"            element={<PlaceholderPage title="Цели" />} />
             <Route path="/ai"               element={<PlaceholderPage title="AI Советник" />} />
