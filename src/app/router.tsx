@@ -7,6 +7,7 @@ const LoginPage           = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage        = lazy(() => import('@/pages/auth/RegisterPage'));
 const TransactionsPage    = lazy(() => import('@/pages/transactions/TransactionsPage'));
 const AddTransactionPage  = lazy(() => import('@/pages/transactions/AddTransactionPage'));
+const ImportCSVPage       = lazy(() => import('@/pages/settings/ImportCSVPageRoute'));
 
 function LoadingScreen() {
   return (
@@ -65,7 +66,7 @@ export function AppRouter() {
             <Route path="/goals"            element={<PlaceholderPage title="Цели" />} />
             <Route path="/ai"               element={<PlaceholderPage title="AI Советник" />} />
             <Route path="/settings"         element={<PlaceholderPage title="Настройки" />} />
-            <Route path="/settings/import"  element={<PlaceholderPage title="Импорт CSV" />} />
+            <Route path="/settings/import"  element={<ImportCSVPage />} />
           </Route>
         </Route>
       </Routes>
