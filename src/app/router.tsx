@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
+import { AppLayout } from './layouts/AppLayout';
 
 const LoginPage    = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage = lazy(() => import('@/pages/auth/RegisterPage'));
@@ -29,8 +30,12 @@ function GuestRoute() {
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
-    <div className="flex items-center justify-center h-screen">
-      <h1 className="text-2xl font-bold text-gray-600">{title}</h1>
+    <div className="flex items-center justify-center h-full">
+      <div className="text-center">
+        <div className="text-6xl mb-4">🚧</div>
+        <h1 className="text-2xl font-bold text-gray-600">{title}</h1>
+        <p className="text-gray-400 mt-2">В разработке</p>
+      </div>
     </div>
   );
 }
@@ -47,17 +52,19 @@ export function AppRouter() {
           <Route path="/auth/register" element={<RegisterPage />} />
         </Route>
 
-        {/* Protected routes */}
+        {/* Protected routes with layout */}
         <Route element={<ProtectedRoute />}>
-          <Route path="/dashboard"       element={<PlaceholderPage title="Dashboard" />} />
-          <Route path="/transactions"    element={<PlaceholderPage title="Transactions" />} />
-          <Route path="/transactions/new" element={<PlaceholderPage title="Add Transaction" />} />
-          <Route path="/budgets"         element={<PlaceholderPage title="Budgets" />} />
-          <Route path="/analytics"       element={<PlaceholderPage title="Analytics" />} />
-          <Route path="/goals"           element={<PlaceholderPage title="Goals" />} />
-          <Route path="/ai"              element={<PlaceholderPage title="AI Advisor" />} />
-          <Route path="/settings"        element={<PlaceholderPage title="Settings" />} />
-          <Route path="/settings/import" element={<PlaceholderPage title="Import CSV" />} />
+          <Route element={<AppLayout />}>
+            <Route path="/dashboard"        element={<PlaceholderPage title="Dashboard" />} />
+            <Route path="/transactions"     element={<PlaceholderPage title="Транзакции" />} />
+            <Route path="/transactions/new" element={<PlaceholderPage title="Новая транзакция" />} />
+            <Route path="/budgets"          element={<PlaceholderPage title="Бюджеты" />} />
+            <Route path="/analytics"        element={<PlaceholderPage title="Аналитика" />} />
+            <Route path="/goals"            element={<PlaceholderPage title="Цели" />} />
+            <Route path="/ai"               element={<PlaceholderPage title="AI Советник" />} />
+            <Route path="/settings"         element={<PlaceholderPage title="Настройки" />} />
+            <Route path="/settings/import"  element={<PlaceholderPage title="Импорт CSV" />} />
+          </Route>
         </Route>
       </Routes>
     </Suspense>
