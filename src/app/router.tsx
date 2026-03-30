@@ -5,6 +5,7 @@ import { AppLayout } from './layouts/AppLayout';
 
 const LoginPage           = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage        = lazy(() => import('@/pages/auth/RegisterPage'));
+const TransactionsPage    = lazy(() => import('@/pages/transactions/TransactionsPage'));
 const AddTransactionPage  = lazy(() => import('@/pages/transactions/AddTransactionPage'));
 
 function LoadingScreen() {
@@ -57,7 +58,7 @@ export function AppRouter() {
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard"        element={<PlaceholderPage title="Dashboard" />} />
-            <Route path="/transactions"     element={<PlaceholderPage title="Транзакции" />} />
+            <Route path="/transactions"     element={<TransactionsPage />} />
             <Route path="/transactions/new" element={<AddTransactionPage />} />
             <Route path="/budgets"          element={<PlaceholderPage title="Бюджеты" />} />
             <Route path="/analytics"        element={<PlaceholderPage title="Аналитика" />} />
