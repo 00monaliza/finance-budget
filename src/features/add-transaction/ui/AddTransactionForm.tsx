@@ -3,10 +3,12 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { Button, Input, Card } from '@/shared/ui';
 import { createTransaction } from '@/entities/transaction';
 import { fetchCategories } from '@/entities/category';
 import { useAuthStore } from '@/entities/user';
+import { useAutoCategorize } from '@/features/auto-categorize';
 import { cn } from '@/shared/lib/cn';
 
 const schema = z.object({
@@ -40,7 +42,7 @@ export function AddTransactionForm() {
     queryFn: fetchCategories,
   });
 
-  const { register, handleSubmit, control, watch, formState: { errors } } = useForm<FormData>({
+  const { register, handleSubmit, control, watch, setValue, formState: { errors } } = useForm<FormData>({
     resolver: zodResolver(schema),
     defaultValues: {
       type:    'expense',
@@ -48,6 +50,11 @@ export function AddTransactionForm() {
       account: 'main',
     },
   });
+
+  const { trigger: triggerCategorize } = useAutoCategorize(
+    categories,
+    (id) => setValue('category_id', id, { shouldValidate: true })
+  );
 
   const selectedType = watch('type');
   const filteredCategories = categories.filter(
@@ -163,12 +170,18 @@ export function AddTransactionForm() {
             )}
           </div>
 
-          {/* Description */}
-          <Input
-            label="Описание (необязательно)"
-            placeholder="Например: Обед в кафе"
-            {...register('description')}
-          />
+          {/* Description with AI categorize */}
+          <div className="relative">
+            <Input
+              label="Описание (необязательно)"
+              placeholder="Например: Обед в кафе"
+              rightIcon={<Sparkles size={14} className="text-[#DA7B93]" />}
+              {...register('description', {
+                onChange: (e) => triggerCategorize(e.target.value),
+              })}
+            />
+            <p className="text-xs text-gray-400 mt-1">AI автоматически подберёт категорию</p>
+          </div>
 
           {/* Date & Account row */}
           <div className="flex gap-3">
