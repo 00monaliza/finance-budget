@@ -8,7 +8,7 @@
 ## Фаза 1 — Основа
 
 - [x] 1. Инициализация проекта (Vite + TS + Tailwind + FSD структура)
-- [ ] 2. Настройка Supabase (schema + RLS + seed categories)
+- [x] 2. Настройка Supabase (schema + RLS + seed categories)
 - [ ] 3. Auth (login / register / logout)
 - [ ] 4. Layout (Sidebar + Header + роуты)
 - [ ] 5. shared/ui базовые компоненты (Button, Input, Card, Badge, Modal)

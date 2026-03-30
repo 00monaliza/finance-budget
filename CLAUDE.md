@@ -500,7 +500,3 @@ export function parseKaspiCSV(csvText: string): Partial<Transaction>[] {
 }
 ```
 
----
-
-*Документ обновляется по мере развития проекта.*
-*Версия: 1.0.0 · Автор: Rizz · Платформа: FinanceAI*
