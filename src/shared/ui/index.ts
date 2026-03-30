@@ -4,3 +4,4 @@ export { Card } from './Card';
 export { Badge } from './Badge';
 export { Modal } from './Modal';
 export { Skeleton, SkeletonCard } from './Skeleton';
+export { ParticleBackground } from './ParticleBackground';

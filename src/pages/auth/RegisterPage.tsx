@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { Link } from 'react-router-dom';
 import { useState } from 'react';
 import { signUp } from '@/features/auth';
+import { ParticleBackground } from '@/shared/ui';
 
 const schema = z.object({
   name: z.string().min(2, 'Минимум 2 символа'),
@@ -35,12 +36,16 @@ export default function RegisterPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-sm p-8 text-center">
+      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0d1b26] px-4">
+        <ParticleBackground />
+        <div className="pointer-events-none absolute -left-20 top-[-80px] h-64 w-64 rounded-full bg-[#5DCAA5]/20 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-[#DA7B93]/20 blur-3xl" />
+
+        <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
           <div className="text-5xl mb-4">✅</div>
-          <h2 className="text-xl font-bold text-[#2F4454] mb-2">Проверьте почту</h2>
-          <p className="text-gray-500">Мы отправили письмо с подтверждением на ваш email.</p>
-          <Link to="/auth/login" className="mt-6 block text-[#376E6F] font-medium hover:underline">
+          <h2 className="mb-2 text-xl font-bold text-white">Проверьте почту</h2>
+          <p className="text-white/65">Мы отправили письмо с подтверждением на ваш email.</p>
+          <Link to="/auth/login" className="mt-6 block font-medium text-[#DA7B93] hover:underline">
             Войти
           </Link>
         </div>
@@ -49,54 +54,58 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-sm p-8">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#0d1b26] px-4">
+      <ParticleBackground />
+      <div className="pointer-events-none absolute -left-20 top-[-80px] h-64 w-64 rounded-full bg-[#5DCAA5]/20 blur-3xl" />
+      <div className="pointer-events-none absolute -right-24 top-24 h-72 w-72 rounded-full bg-[#DA7B93]/20 blur-3xl" />
+
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-white/10 bg-[rgba(255,255,255,0.04)] p-8 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-[#2F4454]">FinanceAI</h1>
-          <p className="text-gray-500 mt-2">Создайте аккаунт</p>
+          <h1 className="text-3xl font-bold text-white">FinanceAI</h1>
+          <p className="mt-2 text-white/65">Создайте аккаунт</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Имя</label>
+            <label className="mb-1 block text-sm font-medium text-white/80">Имя</label>
             <input
               {...register('name')}
               type="text"
               placeholder="Ваше имя"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2F4454] focus:border-transparent"
+              className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
             />
             {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="mb-1 block text-sm font-medium text-white/80">Email</label>
             <input
               {...register('email')}
               type="email"
               placeholder="you@example.com"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2F4454] focus:border-transparent"
+              className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
             />
             {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Пароль</label>
+            <label className="mb-1 block text-sm font-medium text-white/80">Пароль</label>
             <input
               {...register('password')}
               type="password"
               placeholder="••••••"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2F4454] focus:border-transparent"
+              className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
             />
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Подтвердите пароль</label>
+            <label className="mb-1 block text-sm font-medium text-white/80">Подтвердите пароль</label>
             <input
               {...register('confirmPassword')}
               type="password"
               placeholder="••••••"
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#2F4454] focus:border-transparent"
+              className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
             />
             {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
           </div>
@@ -110,15 +119,15 @@ export default function RegisterPage() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full bg-[#2F4454] text-white py-2.5 rounded-xl font-medium hover:bg-[#376E6F] transition-colors disabled:opacity-60"
+            className="w-full rounded-xl bg-[#5DCAA5] py-2.5 font-medium text-[#0d1b26] transition-colors hover:bg-[#71d9b6] disabled:opacity-60"
           >
             {isSubmitting ? 'Регистрируем...' : 'Зарегистрироваться'}
           </button>
         </form>
 
-        <p className="text-center text-sm text-gray-500 mt-6">
+        <p className="mt-6 text-center text-sm text-white/65">
           Уже есть аккаунт?{' '}
-          <Link to="/auth/login" className="text-[#376E6F] font-medium hover:underline">
+          <Link to="/auth/login" className="font-medium text-[#DA7B93] hover:underline">
             Войти
           </Link>
         </p>
