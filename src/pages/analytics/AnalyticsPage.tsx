@@ -62,19 +62,19 @@ export default function AnalyticsPage() {
   const totalIncome  = transactions.filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 text-white">
       {/* Year selector */}
       <div className="flex items-center gap-3">
-        <h2 className="text-lg font-semibold text-[#2F4454]">Аналитика</h2>
-        <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-xl px-1 py-1">
+        <h2 className="text-lg font-semibold text-white">Аналитика</h2>
+        <div className="flex items-center gap-1 rounded-xl border border-white/15 bg-white/6 px-1 py-1">
           <button
             onClick={() => setYear(y => y - 1)}
-            className="px-2 py-1 rounded-lg hover:bg-gray-100 text-sm text-gray-500"
+            className="rounded-lg px-2 py-1 text-sm text-white/65 hover:bg-white/10"
           >←</button>
-          <span className="px-3 text-sm font-medium text-[#2F4454]">{year}</span>
+          <span className="px-3 text-sm font-medium text-white">{year}</span>
           <button
             onClick={() => setYear(y => Math.min(y + 1, now.getFullYear()))}
-            className="px-2 py-1 rounded-lg hover:bg-gray-100 text-sm text-gray-500"
+            className="rounded-lg px-2 py-1 text-sm text-white/65 hover:bg-white/10"
             disabled={year >= now.getFullYear()}
           >→</button>
         </div>
@@ -89,7 +89,7 @@ export default function AnalyticsPage() {
             color: totalIncome >= totalExpense ? '#1D9E75' : '#E24B4A' },
         ].map(s => (
           <Card key={s.label}>
-            <p className="text-xs text-gray-400">{s.label}</p>
+            <p className="text-xs text-white/55">{s.label}</p>
             <p className="text-xl font-bold mt-1" style={{ color: s.color }}>{s.value}</p>
           </Card>
         ))}
@@ -97,14 +97,22 @@ export default function AnalyticsPage() {
 
       {/* Monthly bar chart */}
       <Card>
-        <h3 className="text-sm font-semibold text-[#2F4454] mb-4">Доходы и расходы по месяцам</h3>
+        <h3 className="text-sm font-semibold text-white mb-4">Доходы и расходы по месяцам</h3>
         <ResponsiveContainer width="100%" height={240}>
           <BarChart data={monthlyData} barGap={4}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11 }} axisLine={false} tickLine={false} width={64}
+            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" vertical={false} />
+            <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }} axisLine={false} tickLine={false} />
+            <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }} axisLine={false} tickLine={false} width={64}
               tickFormatter={v => v > 0 ? `${(v / 1000).toFixed(0)}k` : '0'} />
-            <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+            <Tooltip
+              contentStyle={{
+                background: 'rgba(13, 27, 38, 0.95)',
+                border: '1px solid rgba(255,255,255,0.12)',
+                borderRadius: '12px',
+                color: '#fff',
+              }}
+              formatter={(v) => formatCurrency(Number(v))}
+            />
             <Bar dataKey="income"  fill="#1D9E75" radius={[4, 4, 0, 0]} name="Доходы"  maxBarSize={32} />
             <Bar dataKey="expense" fill="#E24B4A" radius={[4, 4, 0, 0]} name="Расходы" maxBarSize={32} />
           </BarChart>
@@ -114,9 +122,9 @@ export default function AnalyticsPage() {
       {/* Pie + category list */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <h3 className="text-sm font-semibold text-[#2F4454] mb-4">Расходы по категориям</h3>
+          <h3 className="text-sm font-semibold text-white mb-4">Расходы по категориям</h3>
           {pieData.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">Нет данных</p>
+            <p className="text-sm text-white/55 text-center py-8">Нет данных</p>
           ) : (
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
@@ -134,7 +142,7 @@ export default function AnalyticsPage() {
                     <Cell key={i} fill={entry.color} />
                   ))}
                 </Pie>
-                <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-gray-600">{v}</span>} />
+                <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-white/70">{v}</span>} />
                 <Tooltip formatter={(v) => formatCurrency(Number(v))} />
               </PieChart>
             </ResponsiveContainer>
@@ -142,20 +150,20 @@ export default function AnalyticsPage() {
         </Card>
 
         <Card>
-          <h3 className="text-sm font-semibold text-[#2F4454] mb-4">Топ категорий расходов</h3>
+          <h3 className="text-sm font-semibold text-white mb-4">Топ категорий расходов</h3>
           {pieData.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-8">Нет данных</p>
+            <p className="text-sm text-white/55 text-center py-8">Нет данных</p>
           ) : (
             <div className="space-y-3">
               {pieData.map((cat, i) => (
                 <div key={i}>
                   <div className="flex items-center justify-between text-sm mb-1">
-                    <span className="flex items-center gap-2 text-gray-700 font-medium">
+                    <span className="flex items-center gap-2 text-white/85 font-medium">
                       {cat.icon} {cat.name}
                     </span>
-                    <span className="text-gray-500">{formatCurrency(cat.amount)}</span>
+                    <span className="text-white/70">{formatCurrency(cat.amount)}</span>
                   </div>
-                  <div className="h-1.5 bg-gray-100 rounded-full">
+                  <div className="h-1.5 bg-white/12 rounded-full">
                     <div
                       className="h-full rounded-full"
                       style={{
@@ -164,7 +172,7 @@ export default function AnalyticsPage() {
                       }}
                     />
                   </div>
-                  <p className="text-xs text-gray-400 mt-0.5 text-right">
+                  <p className="text-xs text-white/50 mt-0.5 text-right">
                     {totalExpense > 0 ? Math.round((cat.amount / totalExpense) * 100) : 0}%
                   </p>
                 </div>

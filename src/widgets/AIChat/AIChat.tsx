@@ -133,8 +133,8 @@ export function AIChat() {
           <Bot size={20} className="text-[#DA7B93]" />
         </div>
         <div>
-          <h2 className="font-semibold text-[#2F4454]">AI Финансовый советник</h2>
-          <p className="text-xs text-gray-400">Powered by Gemini 2.0 Flash</p>
+          <h2 className="font-semibold text-white">AI Финансовый советник</h2>
+          <p className="text-xs text-white/55">Powered by Gemini 2.0 Flash</p>
         </div>
       </div>
 
@@ -147,8 +147,8 @@ export function AIChat() {
         ) : history.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
             <Sparkles size={40} className="text-[#DA7B93] mb-4" />
-            <h3 className="font-semibold text-[#2F4454] mb-2">Привет! Я ваш AI советник</h3>
-            <p className="text-sm text-gray-400 mb-6">
+            <h3 className="font-semibold text-white mb-2">Привет! Я ваш AI советник</h3>
+            <p className="text-sm text-white/55 mb-6">
               Задайте любой вопрос о ваших финансах — я анализирую ваши данные и даю конкретные советы
             </p>
             <div className="flex flex-col gap-2 w-full">
@@ -156,7 +156,7 @@ export function AIChat() {
                 <button
                   key={q}
                   onClick={() => send(q)}
-                  className="text-left text-sm px-4 py-2.5 rounded-xl border border-gray-200 hover:border-[#DA7B93]/50 hover:bg-[#DA7B93]/5 transition-colors text-gray-600"
+                  className="text-left text-sm px-4 py-2.5 rounded-xl border border-white/15 hover:border-[#DA7B93]/50 hover:bg-[#DA7B93]/12 transition-colors text-white/75"
                 >
                   {q}
                 </button>
@@ -183,7 +183,7 @@ export function AIChat() {
                   'max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
                   msg.role === 'user'
                     ? 'bg-[#2F4454] text-white rounded-tr-sm'
-                    : 'bg-white border border-gray-100 text-gray-700 rounded-tl-sm shadow-sm'
+                    : 'bg-white/8 border border-white/12 text-white/85 rounded-tl-sm backdrop-blur-xl'
                 )}>
                   {msg.content}
                 </div>
@@ -194,7 +194,7 @@ export function AIChat() {
                 <div className="w-8 h-8 rounded-xl bg-[#DA7B93]/15 flex items-center justify-center">
                   <Bot size={14} className="text-[#DA7B93]" />
                 </div>
-                <div className="bg-white border border-gray-100 rounded-2xl rounded-tl-sm px-4 py-3 shadow-sm">
+                <div className="bg-white/8 border border-white/12 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-xl">
                   <div className="flex gap-1">
                     {[0, 1, 2].map(i => (
                       <div key={i} className="w-1.5 h-1.5 bg-[#DA7B93] rounded-full animate-bounce"
@@ -210,7 +210,7 @@ export function AIChat() {
       </div>
 
       {/* Input */}
-      <div className="pt-3 border-t border-gray-100">
+      <div className="pt-3 border-t border-white/10">
         <div className="flex gap-2">
           <input
             value={input}
@@ -218,12 +218,12 @@ export function AIChat() {
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send(input)}
             placeholder="Задайте вопрос о ваших финансах..."
             disabled={mutation.isPending}
-            className="flex-1 px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2F4454] disabled:opacity-60"
+            className="flex-1 rounded-xl border border-white/15 bg-white/8 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-[#5DCAA5] disabled:opacity-60"
           />
           <button
             onClick={() => send(input)}
             disabled={!input.trim() || mutation.isPending}
-            className="w-12 h-12 bg-[#2F4454] text-white rounded-xl flex items-center justify-center hover:bg-[#376E6F] transition-colors disabled:opacity-50"
+            className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#5DCAA5] text-[#0d1b26] transition-colors hover:bg-[#71d9b6] disabled:opacity-50"
           >
             <Send size={18} />
           </button>

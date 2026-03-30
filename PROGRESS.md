@@ -36,7 +36,7 @@
 ## Фаза 5 — Полировка
 
 - [ ] 17. i18n (ru / kz / en)
-- [ ] 18. Dark mode
+- [x] 18. Dark mode
 - [ ] 19. PWA (manifest + service worker)
 - [ ] 20. Деплой Vercel + DNS ps.kz
 

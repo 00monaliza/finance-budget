@@ -14,7 +14,7 @@ function BudgetBar({ spent, limit, color }: { spent: number; limit: number; colo
   const isWarning = pct >= 80 && !isOver;
 
   return (
-    <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+    <div className="w-full h-2 bg-white/12 rounded-full overflow-hidden">
       <div
         className="h-full rounded-full transition-all"
         style={{
@@ -87,8 +87,8 @@ export function BudgetOverview() {
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-[#2F4454]">Бюджеты</h2>
-          <p className="text-sm text-gray-400 capitalize">{monthLabel}</p>
+          <h2 className="text-lg font-semibold text-white">Бюджеты</h2>
+          <p className="text-sm text-white/55 capitalize">{monthLabel}</p>
         </div>
         <Button
           size="sm"
@@ -107,8 +107,8 @@ export function BudgetOverview() {
       ) : budgets.length === 0 ? (
         <Card className="text-center py-12">
           <div className="text-5xl mb-3">💰</div>
-          <p className="text-gray-500 font-medium">Нет бюджетов</p>
-          <p className="text-gray-400 text-sm mt-1">Установите лимиты по категориям</p>
+          <p className="font-medium text-white/75">Нет бюджетов</p>
+          <p className="mt-1 text-sm text-white/55">Установите лимиты по категориям</p>
           <Button size="sm" className="mt-4" onClick={() => setModalOpen(true)}>
             Создать первый
           </Button>
@@ -131,10 +131,10 @@ export function BudgetOverview() {
                     {budget.categories?.icon ?? '📦'}
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-800">
+                    <p className="text-sm font-medium text-white/90">
                       {budget.categories?.name_ru ?? 'Категория'}
                     </p>
-                    <p className="text-xs text-gray-400">
+                    <p className="text-xs text-white/50">
                       {formatCurrency(spentAmt)} / {formatCurrency(budget.limit_amount)}
                     </p>
                   </div>
@@ -146,7 +146,7 @@ export function BudgetOverview() {
                   )}
                   <button
                     onClick={() => deleteMutation.mutate(budget.id)}
-                    className="opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-[#E24B4A] transition-all"
+                    className="rounded-lg p-1.5 text-white/30 opacity-0 transition-all hover:bg-[#E24B4A]/10 hover:text-[#E24B4A] group-hover:opacity-100"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -159,10 +159,10 @@ export function BudgetOverview() {
                 />
 
                 <div className="flex justify-between mt-2">
-                  <span className={cn('text-xs font-medium', isOver ? 'text-[#E24B4A]' : 'text-gray-500')}>
+                  <span className={cn('text-xs font-medium', isOver ? 'text-[#E24B4A]' : 'text-white/65')}>
                     {isOver ? `Перерасход на ${formatCurrency(spentAmt - budget.limit_amount)}` : `${Math.round(pct)}% использовано`}
                   </span>
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-white/45">
                     Осталось {formatCurrency(Math.max(budget.limit_amount - spentAmt, 0))}
                   </span>
                 </div>
@@ -175,11 +175,11 @@ export function BudgetOverview() {
       <Modal open={modalOpen} onClose={() => setModalOpen(false)} title="Новый бюджет">
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Категория</label>
+            <label className="block text-sm font-medium text-white/80 mb-1.5">Категория</label>
             <select
               value={categoryInput}
               onChange={e => setCategoryInput(e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2F4454]"
+              className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
             >
               <option value="">Выберите категорию</option>
               {availableCategories.map(c => (

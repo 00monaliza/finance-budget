@@ -77,8 +77,8 @@ export function ImportCSVPage() {
       <div className="max-w-lg mx-auto">
         <Card className="text-center py-12">
           <CheckCircle size={48} className="text-[#1D9E75] mx-auto mb-4" />
-          <h2 className="text-xl font-bold text-[#2F4454]">Импорт завершён!</h2>
-          <p className="text-gray-500 mt-2">{selectedCount} транзакций добавлено</p>
+          <h2 className="text-xl font-bold text-white">Импорт завершён!</h2>
+          <p className="text-white/60 mt-2">{selectedCount} транзакций добавлено</p>
           <Button className="mt-6" onClick={() => { setRows([]); setDone(false); setFileName(''); }}>
             Импортировать ещё
           </Button>
@@ -88,10 +88,10 @@ export function ImportCSVPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="max-w-3xl mx-auto space-y-4 text-white">
       <Card>
-        <h2 className="text-lg font-semibold text-[#2F4454] mb-1">Импорт выписки Kaspi Bank</h2>
-        <p className="text-sm text-gray-500 mb-4">
+        <h2 className="text-lg font-semibold text-white mb-1">Импорт выписки Kaspi Bank</h2>
+        <p className="text-sm text-white/60 mb-4">
           Скачайте CSV из приложения Kaspi → История → Экспорт и загрузите файл
         </p>
 
@@ -100,13 +100,13 @@ export function ImportCSVPage() {
           onDrop={onDrop}
           onDragOver={e => e.preventDefault()}
           onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-8 text-center cursor-pointer hover:border-[#2F4454]/40 hover:bg-gray-50/50 transition-colors"
+          className="cursor-pointer rounded-xl border-2 border-dashed border-white/20 p-8 text-center transition-colors hover:border-[#5DCAA5]/60 hover:bg-white/6"
         >
-          <Upload size={32} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-sm font-medium text-gray-600">
+          <Upload size={32} className="mx-auto text-white/35 mb-3" />
+          <p className="text-sm font-medium text-white/75">
             {fileName || 'Перетащите CSV файл или нажмите для выбора'}
           </p>
-          <p className="text-xs text-gray-400 mt-1">Формат: Kaspi Bank CSV (UTF-8)</p>
+          <p className="text-xs text-white/50 mt-1">Формат: Kaspi Bank CSV (UTF-8)</p>
           <input
             ref={fileRef}
             type="file"
@@ -119,10 +119,10 @@ export function ImportCSVPage() {
 
       {rows.length > 0 && (
         <Card padding="none">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
             <div className="flex items-center gap-2">
-              <FileText size={16} className="text-gray-400" />
-              <span className="text-sm font-medium text-gray-700">
+              <FileText size={16} className="text-white/45" />
+              <span className="text-sm font-medium text-white/80">
                 Найдено {rows.length} транзакций
               </span>
               <Badge variant="neutral">{selectedCount} выбрано</Badge>
@@ -130,27 +130,27 @@ export function ImportCSVPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setRows(prev => prev.map(r => ({ ...r, _selected: true })))}
-                className="text-xs text-[#376E6F] hover:underline"
+                className="text-xs text-[#5DCAA5] hover:underline"
               >
                 Выбрать все
               </button>
               <button
                 onClick={() => setRows(prev => prev.map(r => ({ ...r, _selected: false })))}
-                className="text-xs text-gray-400 hover:underline"
+                className="text-xs text-white/50 hover:underline"
               >
                 Снять все
               </button>
             </div>
           </div>
 
-          <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+          <div className="max-h-96 divide-y divide-white/8 overflow-y-auto">
             {rows.map((row, i) => (
               <div
                 key={i}
                 onClick={() => toggleRow(i)}
                 className={cn(
                   'flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors',
-                  row._selected ? 'bg-white' : 'bg-gray-50/50 opacity-50'
+                  row._selected ? 'bg-white/6' : 'bg-transparent opacity-55'
                 )}
               >
                 <input
@@ -161,8 +161,8 @@ export function ImportCSVPage() {
                   className="rounded"
                 />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm text-gray-800 truncate">{row.description || '—'}</p>
-                  <p className="text-xs text-gray-400">{row.date}</p>
+                  <p className="text-sm text-white/90 truncate">{row.description || '—'}</p>
+                  <p className="text-xs text-white/45">{row.date}</p>
                 </div>
                 <Badge variant={row.type as 'income' | 'expense'}>
                   {row.type === 'income' ? 'Доход' : 'Расход'}
@@ -178,16 +178,16 @@ export function ImportCSVPage() {
           </div>
 
           {mutation.isError && (
-            <div className="flex items-center gap-2 px-5 py-3 bg-red-50 border-t border-red-100">
+            <div className="flex items-center gap-2 px-5 py-3 bg-[#E24B4A]/10 border-t border-[#E24B4A]/30">
               <AlertCircle size={16} className="text-[#E24B4A]" />
               <span className="text-sm text-[#E24B4A]">Ошибка импорта</span>
             </div>
           )}
 
-          <div className="flex items-center justify-between px-5 py-4 border-t border-gray-100">
+          <div className="flex items-center justify-between px-5 py-4 border-t border-white/10">
             <button
               onClick={() => { setRows([]); setFileName(''); }}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-600"
+              className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80"
             >
               <X size={14} /> Отмена
             </button>
@@ -203,20 +203,20 @@ export function ImportCSVPage() {
       )}
 
       {/* Format hint */}
-      <Card padding="sm" className="bg-amber-50 border-amber-100">
+      <Card padding="sm" className="bg-[#EF9F27]/10 border-[#EF9F27]/30">
         <div className="flex gap-3">
           <AlertCircle size={18} className="text-[#EF9F27] shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-medium text-amber-800">Формат CSV</p>
-            <p className="text-xs text-amber-600 mt-1">
-              Ожидаемый формат колонок: <code className="bg-amber-100 px-1 rounded">Дата;Описание;Сумма</code><br />
+            <p className="text-sm font-medium text-[#f4c46b]">Формат CSV</p>
+            <p className="text-xs text-[#f0d8a9] mt-1">
+              Ожидаемый формат колонок: <code className="rounded bg-[#EF9F27]/20 px-1">Дата;Описание;Сумма</code><br />
               Категории можно назначить вручную после импорта.
             </p>
           </div>
         </div>
       </Card>
 
-      <p className="text-xs text-gray-400 text-center">
+      <p className="text-xs text-white/45 text-center">
         Доступные категории: {categories.length}
       </p>
     </div>

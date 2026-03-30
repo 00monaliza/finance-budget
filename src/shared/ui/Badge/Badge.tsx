@@ -12,7 +12,7 @@ const variantStyles: Record<BadgeVariant, string> = {
   income:   'bg-[#1D9E75]/12 text-[#1D9E75]',
   expense:  'bg-[#E24B4A]/12 text-[#E24B4A]',
   transfer: 'bg-[#378ADD]/12 text-[#378ADD]',
-  neutral:  'bg-gray-100 text-gray-600',
+  neutral:  'bg-white/10 text-white/75',
   warning:  'bg-[#EF9F27]/12 text-[#EF9F27]',
 };
 
@@ -20,7 +20,7 @@ const dotStyles: Record<BadgeVariant, string> = {
   income:   'bg-[#1D9E75]',
   expense:  'bg-[#E24B4A]',
   transfer: 'bg-[#378ADD]',
-  neutral:  'bg-gray-400',
+  neutral:  'bg-white/60',
   warning:  'bg-[#EF9F27]',
 };
 

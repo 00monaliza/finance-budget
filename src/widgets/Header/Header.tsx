@@ -32,13 +32,13 @@ export function Header() {
     .toUpperCase();
 
   return (
-    <header className="h-16 bg-white border-b border-gray-100 px-6 flex items-center justify-between shrink-0 relative z-30">
-      <h1 className="text-lg font-semibold text-[#2F4454]">{title}</h1>
+    <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-[rgba(13,27,38,0.85)] px-6 text-white backdrop-blur-xl">
+      <h1 className="text-lg font-semibold text-white">{title}</h1>
 
       <div className="flex items-center gap-3">
         <Link
           to="/transactions/new"
-          className="flex items-center gap-1.5 bg-[#2F4454] text-white text-sm font-medium px-4 py-2 rounded-xl hover:bg-[#376E6F] transition-colors"
+          className="flex items-center gap-1.5 rounded-xl bg-[#5DCAA5] px-4 py-2 text-sm font-medium text-[#0d1b26] transition-colors hover:bg-[#71d9b6]"
         >
           <Plus size={16} />
           Добавить
@@ -48,9 +48,9 @@ export function Header() {
         <div className="relative">
           <button
             onClick={() => setShowAlerts(v => !v)}
-            className="relative p-2 rounded-xl hover:bg-gray-100 transition-colors"
+            className="relative rounded-xl p-2 transition-colors hover:bg-white/10"
           >
-            <Bell size={20} className="text-gray-500" />
+            <Bell size={20} className="text-white/70" />
             {alerts.length > 0 && (
               <span className="absolute top-1 right-1 w-4 h-4 bg-[#E24B4A] text-white text-[9px] font-bold rounded-full flex items-center justify-center">
                 {alerts.length}
@@ -61,41 +61,41 @@ export function Header() {
           {showAlerts && (
             <>
               <div className="fixed inset-0" onClick={() => setShowAlerts(false)} />
-              <div className="absolute right-0 top-12 w-80 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden">
-                <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
-                  <span className="text-sm font-semibold text-[#2F4454]">Уведомления</span>
-                  <button onClick={() => setShowAlerts(false)} className="p-1 rounded-lg hover:bg-gray-100">
-                    <X size={14} className="text-gray-400" />
+              <div className="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.94)] shadow-[0_24px_64px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+                  <span className="text-sm font-semibold text-white">Уведомления</span>
+                  <button onClick={() => setShowAlerts(false)} className="rounded-lg p-1 hover:bg-white/10">
+                    <X size={14} className="text-white/50" />
                   </button>
                 </div>
                 {alerts.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-sm text-gray-400">
+                  <div className="px-4 py-6 text-center text-sm text-white/55">
                     Всё в порядке ✅
                   </div>
                 ) : (
-                  <div className="divide-y divide-gray-50 max-h-72 overflow-y-auto">
+                  <div className="max-h-72 divide-y divide-white/8 overflow-y-auto">
                     {alerts.map(alert => (
                       <Link
                         key={alert.budgetId}
                         to="/budgets"
                         onClick={() => setShowAlerts(false)}
-                        className="flex items-start gap-3 px-4 py-3 hover:bg-gray-50 transition-colors"
+                        className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-white/8"
                       >
                         <AlertTriangle
                           size={16}
                           className={cn('mt-0.5 shrink-0', alert.isOver ? 'text-[#E24B4A]' : 'text-[#EF9F27]')}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-gray-800">
+                          <p className="text-sm font-medium text-white/90">
                             {alert.icon} {alert.categoryName}
                           </p>
-                          <p className="text-xs text-gray-500 mt-0.5">
+                          <p className="mt-0.5 text-xs text-white/65">
                             {alert.isOver
                               ? `Перерасход на ${formatCurrency(alert.spent - alert.limit)}`
                               : `${Math.round(alert.pct)}% бюджета использовано`
                             }
                           </p>
-                          <p className="text-xs text-gray-400">
+                          <p className="text-xs text-white/45">
                             {formatCurrency(alert.spent)} / {formatCurrency(alert.limit)}
                           </p>
                         </div>

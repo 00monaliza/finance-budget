@@ -36,15 +36,15 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
 
       {/* Dialog */}
       <div className={cn(
-        'relative w-full bg-white rounded-2xl shadow-xl z-10',
+        'relative z-10 w-full rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.92)] text-white shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl',
         sizeStyles[size]
       )}>
         {title && (
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-gray-100">
-            <h2 className="text-lg font-semibold text-[#2F4454]">{title}</h2>
+          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/10">
+            <h2 className="text-lg font-semibold text-white">{title}</h2>
             <button
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 transition-colors"
+              className="p-1.5 rounded-lg hover:bg-white/10 text-white/60 transition-colors"
             >
               <X size={18} />
             </button>

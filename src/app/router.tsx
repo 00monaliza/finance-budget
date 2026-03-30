@@ -16,8 +16,8 @@ const AIAdvisorPage       = lazy(() => import('@/pages/ai/AIAdvisorPage'));
 
 function LoadingScreen() {
   return (
-    <div className="flex items-center justify-center h-screen">
-      <div className="w-8 h-8 border-4 border-[#2F4454] border-t-transparent rounded-full animate-spin" />
+    <div className="flex h-screen items-center justify-center bg-[#0d1b26]">
+      <div className="h-8 w-8 animate-spin rounded-full border-4 border-[#5DCAA5] border-t-transparent" />
     </div>
   );
 }
@@ -41,8 +41,8 @@ function PlaceholderPage({ title }: { title: string }) {
     <div className="flex items-center justify-center h-full">
       <div className="text-center">
         <div className="text-6xl mb-4">🚧</div>
-        <h1 className="text-2xl font-bold text-gray-600">{title}</h1>
-        <p className="text-gray-400 mt-2">В разработке</p>
+        <h1 className="text-2xl font-bold text-white">{title}</h1>
+        <p className="mt-2 text-white/55">В разработке</p>
       </div>
     </div>
   );

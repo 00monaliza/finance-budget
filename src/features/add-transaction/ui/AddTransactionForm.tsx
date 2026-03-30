@@ -82,12 +82,12 @@ export function AddTransactionForm() {
   return (
     <div className="max-w-lg mx-auto">
       <Card>
-        <h2 className="text-lg font-semibold text-[#2F4454] mb-5">Новая транзакция</h2>
+        <h2 className="text-lg font-semibold text-white mb-5">Новая транзакция</h2>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           {/* Type toggle */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Тип</label>
+            <label className="block text-sm font-medium text-white/80 mb-2">Тип</label>
             <Controller
               name="type"
               control={control}
@@ -106,7 +106,7 @@ export function AddTransactionForm() {
                             : type === 'income'
                             ? 'bg-[#1D9E75] text-white border-[#1D9E75]'
                             : 'bg-[#378ADD] text-white border-[#378ADD]'
-                          : 'bg-white text-gray-500 border-gray-200 hover:border-gray-300'
+                            : 'bg-white/5 text-white/70 border-white/15 hover:border-white/30'
                       )}
                     >
                       {TYPE_LABELS[type]}
@@ -139,7 +139,7 @@ export function AddTransactionForm() {
 
           {/* Category */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Категория</label>
+            <label className="block text-sm font-medium text-white/80 mb-2">Категория</label>
             <div className="grid grid-cols-3 gap-2">
               {filteredCategories.map(cat => {
                 const selected = watch('category_id') === cat.id;
@@ -149,8 +149,8 @@ export function AddTransactionForm() {
                     className={cn(
                       'flex flex-col items-center gap-1 p-2.5 rounded-xl border cursor-pointer transition-colors text-center',
                       selected
-                        ? 'border-[#2F4454] bg-[#2F4454]/5'
-                        : 'border-gray-200 hover:border-gray-300'
+                        ? 'border-[#5DCAA5] bg-[#5DCAA5]/12'
+                        : 'border-white/15 hover:border-white/30'
                     )}
                   >
                     <input
@@ -160,7 +160,7 @@ export function AddTransactionForm() {
                       className="sr-only"
                     />
                     <span className="text-xl">{cat.icon}</span>
-                    <span className="text-xs text-gray-600 leading-tight">{cat.name_ru}</span>
+                    <span className="text-xs text-white/75 leading-tight">{cat.name_ru}</span>
                   </label>
                 );
               })}
@@ -180,7 +180,7 @@ export function AddTransactionForm() {
                 onChange: (e) => triggerCategorize(e.target.value),
               })}
             />
-            <p className="text-xs text-gray-400 mt-1">AI автоматически подберёт категорию</p>
+            <p className="text-xs text-white/50 mt-1">AI автоматически подберёт категорию</p>
           </div>
 
           {/* Date & Account row */}
@@ -194,10 +194,10 @@ export function AddTransactionForm() {
               />
             </div>
             <div className="flex-1">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Счёт</label>
+              <label className="block text-sm font-medium text-white/80 mb-1.5">Счёт</label>
               <select
                 {...register('account')}
-                className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#2F4454]"
+                className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
               >
                 {(['main', 'kaspi', 'cash'] as const).map(acc => (
                   <option key={acc} value={acc}>{ACCOUNT_LABELS[acc]}</option>

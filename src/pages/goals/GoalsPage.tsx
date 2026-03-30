@@ -60,11 +60,11 @@ export default function GoalsPage() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 text-white">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-[#2F4454]">Цели накоплений</h2>
-          <p className="text-sm text-gray-400">{goals.length} {goals.length === 1 ? 'цель' : 'целей'}</p>
+          <h2 className="text-lg font-semibold text-white">Цели накоплений</h2>
+          <p className="text-sm text-white/55">{goals.length} {goals.length === 1 ? 'цель' : 'целей'}</p>
         </div>
         <Button size="sm" leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)}>
           Новая цель
@@ -78,8 +78,8 @@ export default function GoalsPage() {
       ) : goals.length === 0 ? (
         <Card className="text-center py-16">
           <div className="text-5xl mb-3">🎯</div>
-          <p className="text-gray-500 font-medium">Нет целей</p>
-          <p className="text-gray-400 text-sm mt-1">Создайте первую цель накопления</p>
+          <p className="font-medium text-white/75">Нет целей</p>
+          <p className="text-white/55 text-sm mt-1">Создайте первую цель накопления</p>
           <Button size="sm" className="mt-4" onClick={() => setModalOpen(true)}>Создать</Button>
         </Card>
       ) : (
@@ -93,7 +93,7 @@ export default function GoalsPage() {
               <Card key={goal.id} className="group relative">
                 <button
                   onClick={() => deleteMutation.mutate(goal.id)}
-                  className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-[#E24B4A] transition-all"
+                  className="absolute top-4 right-4 rounded-lg p-1.5 text-white/30 opacity-0 transition-all hover:bg-[#E24B4A]/10 hover:text-[#E24B4A] group-hover:opacity-100"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -106,9 +106,9 @@ export default function GoalsPage() {
                     {goal.icon}
                   </div>
                   <div>
-                    <p className="font-semibold text-[#2F4454]">{goal.name}</p>
+                    <p className="font-semibold text-white">{goal.name}</p>
                     {goal.deadline && (
-                      <p className="text-xs text-gray-400">до {formatDate(goal.deadline)}</p>
+                      <p className="text-xs text-white/50">до {formatDate(goal.deadline)}</p>
                     )}
                   </div>
                   {done && <span className="ml-auto text-lg">✅</span>}
@@ -119,15 +119,15 @@ export default function GoalsPage() {
                     <span className="font-medium" style={{ color: goal.color }}>
                       {formatCurrency(goal.current_amount)}
                     </span>
-                    <span className="text-gray-400">{formatCurrency(goal.target_amount)}</span>
+                    <span className="text-white/55">{formatCurrency(goal.target_amount)}</span>
                   </div>
-                  <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+                  <div className="h-2.5 bg-white/12 rounded-full overflow-hidden">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{ width: `${pct}%`, backgroundColor: goal.color }}
                     />
                   </div>
-                  <div className="flex justify-between text-xs text-gray-400">
+                  <div className="flex justify-between text-xs text-white/50">
                     <span>{Math.round(pct)}% выполнено</span>
                     {!done && <span>осталось {formatCurrency(remains)}</span>}
                   </div>
@@ -135,7 +135,7 @@ export default function GoalsPage() {
 
                 <button
                   onClick={() => { setDepositModal({ goalId: goal.id, name: goal.name, current: goal.current_amount }); setDepositAmount(''); }}
-                  className="w-full text-xs text-[#376E6F] hover:text-[#2F4454] font-medium py-1.5 border border-dashed border-gray-200 rounded-xl hover:border-[#376E6F] transition-colors"
+                  className="w-full rounded-xl border border-dashed border-white/20 py-1.5 text-xs font-medium text-white/75 transition-colors hover:border-[#5DCAA5] hover:text-[#5DCAA5]"
                 >
                   Внести / снять
                 </button>
@@ -162,12 +162,12 @@ export default function GoalsPage() {
             onChange={e => setForm(f => ({ ...f, deadline: e.target.value }))} />
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Иконка</label>
+            <label className="block text-sm font-medium text-white/80 mb-2">Иконка</label>
             <div className="flex flex-wrap gap-2">
               {ICONS.map(icon => (
                 <button key={icon} type="button" onClick={() => setForm(f => ({ ...f, icon }))}
                   className={cn('w-9 h-9 rounded-xl text-lg flex items-center justify-center border transition-colors',
-                    form.icon === icon ? 'border-[#2F4454] bg-[#2F4454]/5' : 'border-gray-200 hover:border-gray-300'
+                    form.icon === icon ? 'border-[#5DCAA5] bg-[#5DCAA5]/12' : 'border-white/15 hover:border-white/30'
                   )}>
                   {icon}
                 </button>
@@ -176,12 +176,12 @@ export default function GoalsPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Цвет</label>
+            <label className="block text-sm font-medium text-white/80 mb-2">Цвет</label>
             <div className="flex gap-2">
               {COLORS.map(color => (
                 <button key={color} type="button" onClick={() => setForm(f => ({ ...f, color }))}
                   className={cn('w-7 h-7 rounded-full border-2 transition-all',
-                    form.color === color ? 'border-gray-800 scale-110' : 'border-transparent'
+                    form.color === color ? 'border-white scale-110' : 'border-transparent'
                   )}
                   style={{ backgroundColor: color }} />
               ))}
