@@ -9,6 +9,7 @@ const TransactionsPage    = lazy(() => import('@/pages/transactions/Transactions
 const AddTransactionPage  = lazy(() => import('@/pages/transactions/AddTransactionPage'));
 const ImportCSVPage       = lazy(() => import('@/pages/settings/ImportCSVPageRoute'));
 const BudgetsPage         = lazy(() => import('@/pages/budgets/BudgetsPage'));
+const DashboardPage       = lazy(() => import('@/pages/dashboard/DashboardPage'));
 
 function LoadingScreen() {
   return (
@@ -59,7 +60,7 @@ export function AppRouter() {
         {/* Protected routes with layout */}
         <Route element={<ProtectedRoute />}>
           <Route element={<AppLayout />}>
-            <Route path="/dashboard"        element={<PlaceholderPage title="Dashboard" />} />
+            <Route path="/dashboard"        element={<DashboardPage />} />
             <Route path="/transactions"     element={<TransactionsPage />} />
             <Route path="/transactions/new" element={<AddTransactionPage />} />
             <Route path="/budgets"          element={<BudgetsPage />} />
