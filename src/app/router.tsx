@@ -12,6 +12,7 @@ const BudgetsPage         = lazy(() => import('@/pages/budgets/BudgetsPage'));
 const DashboardPage       = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const AnalyticsPage       = lazy(() => import('@/pages/analytics/AnalyticsPage'));
 const GoalsPage           = lazy(() => import('@/pages/goals/GoalsPage'));
+const AIAdvisorPage       = lazy(() => import('@/pages/ai/AIAdvisorPage'));
 
 function LoadingScreen() {
   return (
@@ -68,7 +69,7 @@ export function AppRouter() {
             <Route path="/budgets"          element={<BudgetsPage />} />
             <Route path="/analytics"        element={<AnalyticsPage />} />
             <Route path="/goals"            element={<GoalsPage />} />
-            <Route path="/ai"               element={<PlaceholderPage title="AI Советник" />} />
+            <Route path="/ai"               element={<AIAdvisorPage />} />
             <Route path="/settings"         element={<PlaceholderPage title="Настройки" />} />
             <Route path="/settings/import"  element={<ImportCSVPage />} />
           </Route>
