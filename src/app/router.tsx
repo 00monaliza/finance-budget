@@ -5,6 +5,8 @@ import { AppLayout } from './layouts/AppLayout';
 
 const LoginPage           = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage        = lazy(() => import('@/pages/auth/RegisterPage'));
+const ForgotPasswordPage  = lazy(() => import('@/pages/auth/ForgotPasswordPage'));
+const ResetPasswordPage   = lazy(() => import('@/pages/auth/ResetPasswordPage'));
 const TransactionsPage    = lazy(() => import('@/pages/transactions/TransactionsPage'));
 const AddTransactionPage  = lazy(() => import('@/pages/transactions/AddTransactionPage'));
 const ImportCSVPage       = lazy(() => import('@/pages/settings/ImportCSVPageRoute'));
@@ -58,7 +60,10 @@ export function AppRouter() {
         <Route element={<GuestRoute />}>
           <Route path="/auth/login"    element={<LoginPage />} />
           <Route path="/auth/register" element={<RegisterPage />} />
+          <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
         </Route>
+
+        <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
         {/* Protected routes with layout */}
         <Route element={<ProtectedRoute />}>

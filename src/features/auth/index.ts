@@ -1,1 +1,9 @@
-export { signIn, signUp, signOut, getSession } from './api/authApi';
+export {
+	signIn,
+	signUp,
+	signOut,
+	getSession,
+	resendConfirmation,
+	requestPasswordReset,
+	updatePassword,
+} from './api/authApi';

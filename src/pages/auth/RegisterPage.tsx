@@ -20,6 +20,8 @@ type FormData = z.infer<typeof schema>;
 export default function RegisterPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<FormData>({
     resolver: zodResolver(schema),
   });
@@ -90,23 +92,41 @@ export default function RegisterPage() {
 
           <div>
             <label className="mb-1 block text-sm font-medium text-white/80">Пароль</label>
-            <input
-              {...register('password')}
-              type="password"
-              placeholder="••••••"
-              className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
-            />
+            <div className="relative">
+              <input
+                {...register('password')}
+                type={showPassword ? 'text' : 'password'}
+                placeholder="••••••"
+                className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 pr-28 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-white/70 transition-colors hover:text-white"
+              >
+                {showPassword ? 'Скрыть' : 'Показать'}
+              </button>
+            </div>
             {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>}
           </div>
 
           <div>
             <label className="mb-1 block text-sm font-medium text-white/80">Подтвердите пароль</label>
-            <input
-              {...register('confirmPassword')}
-              type="password"
-              placeholder="••••••"
-              className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
-            />
+            <div className="relative">
+              <input
+                {...register('confirmPassword')}
+                type={showConfirmPassword ? 'text' : 'password'}
+                placeholder="••••••"
+                className="w-full rounded-xl border border-white/15 bg-white/8 px-4 py-2.5 pr-28 text-white placeholder:text-white/35 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-[#5DCAA5]"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword((prev) => !prev)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-medium text-white/70 transition-colors hover:text-white"
+              >
+                {showConfirmPassword ? 'Скрыть' : 'Показать'}
+              </button>
+            </div>
             {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword.message}</p>}
           </div>
 
