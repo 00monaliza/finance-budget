@@ -1,14 +1,22 @@
 import type { BudgetContext } from '@/shared/types/budget-context';
 import { env } from '@/shared/config/env';
 
-const GEMINI_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta/models';
+const MODEL_CANDIDATES = [
+  env.GEMINI_MODEL || 'gemini-flash-latest',
+  'gemini-flash-lite-latest',
+  'gemini-2.5-flash-lite',
+];
 
 function mapGeminiError(status: number): string {
   if (status === 429) {
-    return 'Превышен лимит Gemini API (429). Подождите 1-2 минуты или проверьте квоту в Google AI Studio.';
+    return 'Превышен лимит Gemini API (429). Для выбранной модели квота исчерпана; попробуйте позже или смените модель/план.';
   }
   if (status === 401 || status === 403) {
     return 'Ключ Gemini недействителен или ограничен. Проверьте VITE_GEMINI_API_KEY и настройки API key.';
+  }
+  if (status === 503) {
+    return 'Модель Gemini временно перегружена (503). Попробуйте повторить запрос через несколько секунд.';
   }
   if (status >= 500) {
     return 'Сервис Gemini временно недоступен. Попробуйте снова позже.';
@@ -22,26 +30,36 @@ async function callGemini(prompt: string, maxOutputTokens: number): Promise<stri
   }
 
   try {
-    const response = await fetch(`${GEMINI_URL}?key=${env.GEMINI_API_KEY}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: prompt }],
-          },
-        ],
-        generationConfig: { maxOutputTokens },
-      }),
-    });
+    let lastStatus = 0;
+    const uniqueModels = Array.from(new Set(MODEL_CANDIDATES));
 
-    if (!response.ok) {
-      return mapGeminiError(response.status);
+    for (const model of uniqueModels) {
+      const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${env.GEMINI_API_KEY}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          contents: [
+            {
+              role: 'user',
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: { maxOutputTokens },
+        }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'AI вернул пустой ответ. Попробуйте уточнить запрос.';
+      }
+
+      lastStatus = response.status;
+      if (response.status !== 429 && response.status !== 503) {
+        return mapGeminiError(response.status);
+      }
     }
 
-    const data = await response.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'AI вернул пустой ответ. Попробуйте уточнить запрос.';
+    return mapGeminiError(lastStatus || 429);
   } catch {
     return 'Сетевая ошибка при обращении к Gemini. Проверьте интернет и доступ к API.';
   }

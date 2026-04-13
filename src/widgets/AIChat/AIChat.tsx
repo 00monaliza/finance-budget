@@ -1,8 +1,8 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Send, Bot, User, Sparkles } from 'lucide-react';
 import { useAuthStore } from '@/entities/user';
-import { fetchTransactions, fetchMonthTotals } from '@/entities/transaction';
+import { fetchAllTransactions } from '@/entities/transaction';
 import { fetchBudgets, fetchSpentByCategory } from '@/entities/budget';
 import { askAI } from '@/shared/api/gemini';
 import { supabase } from '@/shared/api/supabase';
@@ -46,6 +46,8 @@ export function AIChat() {
   const now   = new Date();
   const year  = now.getFullYear();
   const month = now.getMonth() + 1;
+  const monthFrom = `${year}-${String(month).padStart(2, '0')}-01`;
+  const monthTo = new Date(year, month, 0).toISOString().split('T')[0];
 
   const { data: history = [], isLoading: historyLoading } = useQuery({
     queryKey: ['ai-chats', user?.id],
@@ -53,29 +55,92 @@ export function AIChat() {
     enabled: !!user,
   });
 
-  const { data: totals } = useQuery({
-    queryKey: ['totals', user?.id, year, month],
-    queryFn: () => fetchMonthTotals(user!.id, year, month),
+  const { data: allTxns = [], isLoading: allTxnsLoading } = useQuery({
+    queryKey: ['transactions-all', user?.id],
+    queryFn: () => fetchAllTransactions(user!.id),
     enabled: !!user,
   });
 
-  const { data: recentTxns = [] } = useQuery({
-    queryKey: ['transactions', user?.id, {}, 0],
-    queryFn: () => fetchTransactions(user!.id, {}, 0, 10),
-    enabled: !!user,
-  });
-
-  const { data: budgets = [] } = useQuery({
+  const { data: budgets = [], isLoading: budgetsLoading } = useQuery({
     queryKey: ['budgets', user?.id, year, month],
     queryFn: () => fetchBudgets(user!.id, year, month),
     enabled: !!user,
   });
 
-  const { data: spent = {} } = useQuery({
+  const { data: spent = {}, isLoading: spentLoading } = useQuery({
     queryKey: ['spent', user?.id, year, month],
     queryFn: () => fetchSpentByCategory(user!.id, year, month),
     enabled: !!user,
   });
+
+  const monthTxns = useMemo(
+    () => allTxns.filter((t) => t.date >= monthFrom && t.date <= monthTo),
+    [allTxns, monthFrom, monthTo],
+  );
+
+  const monthTotals = useMemo(
+    () => monthTxns.reduce(
+      (acc, t) => {
+        if (t.type === 'income') acc.income += t.amount;
+        if (t.type === 'expense') acc.expense += t.amount;
+        return acc;
+      },
+      { income: 0, expense: 0 },
+    ),
+    [monthTxns],
+  );
+
+  const allTimeTotals = useMemo(
+    () => allTxns.reduce(
+      (acc, t) => {
+        if (t.type === 'income') acc.income += t.amount;
+        if (t.type === 'expense') acc.expense += t.amount;
+        return acc;
+      },
+      { income: 0, expense: 0 },
+    ),
+    [allTxns],
+  );
+
+  const monthByCategory = useMemo(() => {
+    const map = new Map<string, { name: string; amount: number }>();
+    const monthExpenseTotal = monthTxns
+      .filter((t) => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0);
+
+    for (const transaction of monthTxns) {
+      if (transaction.type !== 'expense') continue;
+
+      const key = transaction.category_id ?? 'uncategorized';
+      const name = transaction.categories?.name_ru ?? 'Без категории';
+      const existing = map.get(key);
+
+      if (existing) {
+        existing.amount += transaction.amount;
+      } else {
+        map.set(key, { name, amount: transaction.amount });
+      }
+    }
+
+    return Array.from(map.values())
+      .sort((a, b) => b.amount - a.amount)
+      .map((item) => ({
+        name: item.name,
+        amount: item.amount,
+        pct: monthExpenseTotal > 0 ? Math.round((item.amount / monthExpenseTotal) * 100) : 0,
+      }));
+  }, [monthTxns]);
+
+  const topTransactions = useMemo(
+    () => allTxns.slice(0, 10).map((t) => ({
+      description: t.description ?? t.categories?.name_ru ?? '—',
+      amount: t.amount,
+      type: t.type,
+    })),
+    [allTxns],
+  );
+
+  const isFinancialDataLoading = allTxnsLoading || budgetsLoading || spentLoading;
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -88,26 +153,25 @@ export function AIChat() {
       const context: BudgetContext = {
         period: { month, year },
         totals: {
-          income:  totals?.income  ?? 0,
-          expense: totals?.expense ?? 0,
-          balance: (totals?.income ?? 0) - (totals?.expense ?? 0),
+          income:  monthTotals.income,
+          expense: monthTotals.expense,
+          balance: monthTotals.income - monthTotals.expense,
         },
-        by_category: budgets.map(b => ({
-          name:   b.categories?.name_ru ?? 'Категория',
-          amount: spent[b.category_id] ?? 0,
-          pct:    b.limit_amount > 0 ? Math.round(((spent[b.category_id] ?? 0) / b.limit_amount) * 100) : 0,
-        })),
-        top_transactions: recentTxns.slice(0, 5).map(t => ({
-          description: t.description ?? t.categories?.name_ru ?? '—',
-          amount: t.amount,
-          type: t.type,
-        })),
+        by_category: monthByCategory,
+        top_transactions: topTransactions,
         budget_limits: budgets.map(b => ({
           category: b.categories?.name_ru ?? 'Категория',
           limit:    b.limit_amount,
           spent:    spent[b.category_id] ?? 0,
           pct:      b.limit_amount > 0 ? Math.round(((spent[b.category_id] ?? 0) / b.limit_amount) * 100) : 0,
         })),
+        all_time: {
+          income: allTimeTotals.income,
+          expense: allTimeTotals.expense,
+          balance: allTimeTotals.income - allTimeTotals.expense,
+          transactions_count: allTxns.length,
+        },
+        month_transactions_count: monthTxns.length,
       };
 
       const answer = await askAI(question, context);
@@ -121,7 +185,7 @@ export function AIChat() {
   });
 
   const send = (text: string) => {
-    if (!text.trim() || mutation.isPending) return;
+    if (!text.trim() || mutation.isPending || isFinancialDataLoading) return;
     mutation.mutate(text.trim());
   };
 
@@ -134,7 +198,7 @@ export function AIChat() {
         </div>
         <div>
           <h2 className="font-semibold text-white">AI Финансовый советник</h2>
-          <p className="text-xs text-white/55">Powered by Gemini 2.0 Flash</p>
+          <p className="text-xs text-white/55">Powered by Gemini</p>
         </div>
       </div>
 
@@ -156,7 +220,8 @@ export function AIChat() {
                 <button
                   key={q}
                   onClick={() => send(q)}
-                  className="text-left text-sm px-4 py-2.5 rounded-xl border border-white/15 hover:border-[#DA7B93]/50 hover:bg-[#DA7B93]/12 transition-colors text-white/75"
+                  disabled={isFinancialDataLoading || mutation.isPending}
+                  className="text-left text-sm px-4 py-2.5 rounded-xl border border-white/15 hover:border-[#DA7B93]/50 hover:bg-[#DA7B93]/12 transition-colors text-white/75 disabled:opacity-50 disabled:hover:border-white/15 disabled:hover:bg-transparent"
                 >
                   {q}
                 </button>
@@ -211,18 +276,21 @@ export function AIChat() {
 
       {/* Input */}
       <div className="pt-3 border-t border-white/10">
+        {isFinancialDataLoading && (
+          <p className="mb-2 text-xs text-white/55">Загружаю все ваши транзакции для точного анализа...</p>
+        )}
         <div className="flex gap-2">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send(input)}
             placeholder="Задайте вопрос о ваших финансах..."
-            disabled={mutation.isPending}
+            disabled={mutation.isPending || isFinancialDataLoading}
             className="flex-1 rounded-xl border border-white/15 bg-white/8 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-[#5DCAA5] disabled:opacity-60"
           />
           <button
             onClick={() => send(input)}
-            disabled={!input.trim() || mutation.isPending}
+            disabled={!input.trim() || mutation.isPending || isFinancialDataLoading}
             className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#5DCAA5] text-[#0d1b26] transition-colors hover:bg-[#71d9b6] disabled:opacity-50"
           >
             <Send size={18} />

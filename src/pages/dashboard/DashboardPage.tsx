@@ -63,6 +63,8 @@ export default function DashboardPage() {
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
+  const monthFrom = `${year}-${String(month).padStart(2, '0')}-01`;
+  const monthTo = new Date(year, month, 0).toISOString().split('T')[0];
 
   const { data: totals, isLoading: totalsLoading } = useQuery({
     queryKey: ['totals', user?.id, year, month],
@@ -73,6 +75,15 @@ export default function DashboardPage() {
   const { data: recentTxns = [], isLoading: txnsLoading } = useQuery({
     queryKey: ['transactions', user?.id, {}, 0],
     queryFn: () => fetchTransactions(user!.id, {}, 0, 80),
+    enabled: !!user,
+  });
+
+  const { data: monthTxns = [], isLoading: monthTxnsLoading } = useQuery({
+    queryKey: ['transactions-month-structure', user?.id, year, month],
+    queryFn: () => fetchTransactions(user!.id, {
+      date_from: monthFrom,
+      date_to: monthTo,
+    }, 0, 500),
     enabled: !!user,
   });
 
@@ -101,18 +112,31 @@ export default function DashboardPage() {
   );
 
   const donutData = useMemo(() => {
-    const income = totals?.income ?? 0;
-    const expense = totals?.expense ?? 0;
+    const byCategory = new Map<string, { name: string; value: number; color: string }>();
 
-    if (income === 0 && expense === 0) {
+    for (const transaction of monthTxns) {
+      if (transaction.type !== 'expense') continue;
+
+      const name = transaction.categories?.name_ru ?? 'Без категории';
+      const color = transaction.categories?.color ?? '#888780';
+      const key = transaction.category_id ?? 'uncategorized';
+      const current = byCategory.get(key);
+
+      if (current) {
+        current.value += transaction.amount;
+      } else {
+        byCategory.set(key, { name, value: transaction.amount, color });
+      }
+    }
+
+    const items = Array.from(byCategory.values()).sort((a, b) => b.value - a.value).slice(0, 6);
+
+    if (items.length === 0) {
       return [{ name: 'Нет данных', value: 1, color: '#ffffff22' }];
     }
 
-    return [
-      { name: 'Доходы', value: Math.max(income, 0), color: COLORS.income },
-      { name: 'Расходы', value: Math.max(expense, 0), color: COLORS.expense },
-    ];
-  }, [totals]);
+    return items;
+  }, [monthTxns]);
 
   return (
     <div className="space-y-6 text-white">
@@ -211,26 +235,30 @@ export default function DashboardPage() {
           </section>
 
           <section className={`${glassClass} p-5`}>
-            <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.12em] text-white/70">Структура месяца</h2>
+            <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.12em] text-white/70">Расходы по категориям</h2>
             <div className="flex items-center justify-center">
-              <ResponsiveContainer width="100%" height={220}>
-                <PieChart>
-                  <Pie
-                    data={donutData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={56}
-                    outerRadius={85}
-                    dataKey="value"
-                    stroke="none"
-                    paddingAngle={3}
-                  >
-                    {donutData.map(item => (
-                      <Cell key={item.name} fill={item.color} />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ResponsiveContainer>
+              {monthTxnsLoading ? (
+                <div className="h-[220px] w-full animate-pulse rounded-xl bg-white/5" />
+              ) : (
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={donutData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={56}
+                      outerRadius={85}
+                      dataKey="value"
+                      stroke="none"
+                      paddingAngle={3}
+                    >
+                      {donutData.map(item => (
+                        <Cell key={item.name} fill={item.color} />
+                      ))}
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </div>
             <div className="space-y-2">
               {donutData.map(item => (

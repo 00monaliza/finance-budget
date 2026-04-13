@@ -26,6 +26,28 @@ export async function fetchTransactions(
   return (data ?? []) as Transaction[];
 }
 
+export async function fetchAllTransactions(
+  userId: string,
+  filter?: TransactionFilter,
+  pageSize = 500
+): Promise<Transaction[]> {
+  const result: Transaction[] = [];
+  let page = 0;
+
+  while (true) {
+    const chunk = await fetchTransactions(userId, filter, page, pageSize);
+    result.push(...chunk);
+
+    if (chunk.length < pageSize) break;
+    page += 1;
+
+    // Safety guard for unexpectedly large datasets in a single UI request.
+    if (page > 100) break;
+  }
+
+  return result;
+}
+
 export async function createTransaction(
   payload: Omit<Transaction, 'id' | 'created_at' | 'updated_at' | 'categories'>
 ): Promise<Transaction> {
