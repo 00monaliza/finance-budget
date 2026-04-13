@@ -1,7 +1,7 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import {
   LayoutDashboard, ArrowLeftRight, PieChart, BarChart3,
-  Target, Bot, Settings, LogOut, TrendingUp,
+  Target, Bot, Settings, LogOut,
 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 import { signOut } from '@/features/auth';
@@ -28,8 +28,10 @@ export function Sidebar() {
       {/* Logo */}
       <div className="px-6 py-5 border-b border-white/10">
         <div className="flex items-center gap-2">
-          <TrendingUp className="w-6 h-6 text-[#DA7B93]" />
-          <span className="text-xl font-bold tracking-tight">FinanceAI</span>
+          <div className="h-7 w-7 overflow-hidden rounded-lg ring-1 ring-white/15 bg-white/10">
+            <img src="/avatar.svg" alt="Bonssai" className="h-full w-full object-cover" />
+          </div>
+          <span className="text-xl font-bold tracking-tight">Bonssai</span>
         </div>
         <p className="text-xs text-white/40 mt-0.5">Умный учёт финансов</p>
       </div>

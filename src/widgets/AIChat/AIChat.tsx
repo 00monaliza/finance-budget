@@ -197,8 +197,8 @@ export function AIChat() {
           <Bot size={20} className="text-[#DA7B93]" />
         </div>
         <div>
-          <h2 className="font-semibold text-white">AI Финансовый советник</h2>
-          <p className="text-xs text-white/55">Powered by Gemini</p>
+          <h2 className="font-semibold text-white">BonssAi советник</h2>
+          {/* <p className="text-xs text-white/55">Powered by Gemini</p> */}
         </div>
       </div>
 
@@ -211,7 +211,7 @@ export function AIChat() {
         ) : history.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-center px-6">
             <Sparkles size={40} className="text-[#DA7B93] mb-4" />
-            <h3 className="font-semibold text-white mb-2">Привет! Я ваш AI советник</h3>
+            <h3 className="font-semibold text-white mb-2">Привет! Я ваш BonssAi советник</h3>
             <p className="text-sm text-white/55 mb-6">
               Задайте любой вопрос о ваших финансах — я анализирую ваши данные и даю конкретные советы
             </p>

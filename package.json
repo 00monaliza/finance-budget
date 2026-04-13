@@ -4,8 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
+    "avatar:svg": "node ./scripts/generate-avatar-svg.mjs",
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "npm run avatar:svg && tsc -b && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -39,6 +40,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
     "postcss": "^8.5.8",
+    "potrace": "^2.1.8",
     "tailwindcss": "^4.2.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
