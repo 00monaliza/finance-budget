@@ -297,6 +297,19 @@ export function AIChat() {
     return { name, target_amount, deadline };
   };
 
+  const parseTransactionFromText = (text: string): { amount?: number; account?: 'main' | 'kaspi' | 'cash'; type?: 'income' | 'expense' } => {
+    const lower = text.toLowerCase();
+    let amount: number | undefined;
+    for (const re of [/сумма\s+(\d[\d\s]*)/, /(\d[\d\s]*)\s*(?:тенге|тг|₸)/, /за\s+(\d[\d\s]*)/]) {
+      const m = lower.match(re);
+      if (m) { const n = parseFloat(m[1].replace(/\s/g, '')); if (n > 0) { amount = n; break; } }
+    }
+    if (!amount) { const m = lower.match(/\b(\d{2,})\b/); if (m) { const n = parseFloat(m[1]); if (n > 0) amount = n; } }
+    const account: 'main' | 'kaspi' | 'cash' | undefined = /каспи|kaspi/i.test(lower) ? 'kaspi' : /налич/i.test(lower) ? 'cash' : undefined;
+    const type: 'income' | 'expense' = /доход|зарплат|получил|получила|пришл/i.test(lower) ? 'income' : 'expense';
+    return { amount, account, type };
+  };
+
   const executeCommand = async (_text: string, intent: ChatCommandIntent): Promise<void> => {
     if (intent.intent === 'show_commands_help') {
       await saveMsg('assistant', COMMANDS_HELP);
@@ -407,8 +420,16 @@ export function AIChat() {
 
     if (intent.intent === 'create_transaction') {
       const tx = intent.transaction ?? {};
-      const type = tx.type ?? 'expense';
-      const amount = Number(tx.amount ?? NaN);
+      let type = tx.type ?? 'expense';
+      let amount = Number(tx.amount ?? NaN);
+      let txAccount = tx.account;
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        const local = parseTransactionFromText(_text);
+        if (!Number.isFinite(amount) || amount <= 0) amount = local.amount ?? NaN;
+        if (!txAccount) txAccount = local.account;
+        if (tx.type === undefined) type = local.type ?? 'expense';
+      }
 
       if (!Number.isFinite(amount) || amount <= 0) {
         await saveMsg('assistant', intent.reply ?? 'Укажите сумму. Пример: "добавь расход 4500 такси".');
@@ -417,8 +438,8 @@ export function AIChat() {
 
       const date = typeof tx.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(tx.date)
         ? tx.date : new Date().toISOString().split('T')[0];
-      const account: 'main' | 'kaspi' | 'cash' = tx.account && ['main', 'kaspi', 'cash'].includes(tx.account)
-        ? tx.account : 'main';
+      const account: 'main' | 'kaspi' | 'cash' = txAccount && ['main', 'kaspi', 'cash'].includes(txAccount)
+        ? txAccount as 'main' | 'kaspi' | 'cash' : 'main';
       const categoryId = resolveCategoryId(type, tx.category_id, tx.category_name);
       const categoryName = categoryId ? categories.find(c => c.id === categoryId)?.name_ru ?? null : null;
 
