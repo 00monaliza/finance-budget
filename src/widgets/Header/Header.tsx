@@ -1,10 +1,11 @@
-import { useState } from 'react';
-import { Bell, Plus, X, AlertTriangle } from 'lucide-react';
+import { useState, useRef } from 'react';
+import { Bell, Plus, X, AlertTriangle, Menu, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
 import { useBudgetAlerts } from '@/features/ai-analysis';
 import { formatCurrency } from '@/shared/lib/formatCurrency';
 import { cn } from '@/shared/lib/cn';
+import { QuickAIPanel } from '@/widgets/QuickAIPanel';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':    'Главная',
@@ -16,11 +17,17 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings':     'Настройки',
 };
 
-export function Header() {
+interface HeaderProps {
+  onMenuClick: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
   const { pathname } = useLocation();
   const { user } = useAuthStore();
   const alerts = useBudgetAlerts();
   const [showAlerts, setShowAlerts] = useState(false);
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const aiButtonRef = useRef<HTMLButtonElement>(null);
 
   const title = PAGE_TITLES[pathname] ?? 'FinanceAI';
   const name = user?.user_metadata?.full_name ?? user?.email ?? '';
@@ -32,16 +39,39 @@ export function Header() {
     .toUpperCase();
 
   return (
-    <header className="relative z-30 flex h-16 shrink-0 items-center justify-between border-b border-white/10 bg-[rgba(13,27,38,0.85)] px-6 text-white backdrop-blur-xl">
-      <h1 className="text-lg font-semibold text-white">{title}</h1>
+    <header className="relative z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-[rgba(13,27,38,0.85)] px-3 text-white backdrop-blur-xl sm:px-5 lg:px-6">
+      <div className="flex min-w-0 items-center gap-2">
+        <button
+          type="button"
+          onClick={onMenuClick}
+          className="rounded-xl p-2 transition-colors hover:bg-white/10 lg:hidden"
+          aria-label="Открыть меню"
+        >
+          <Menu size={20} className="text-white/80" />
+        </button>
+        <h1 className="truncate text-base font-semibold text-white sm:text-lg">{title}</h1>
+      </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1.5 sm:gap-2.5">
+        <div className="relative">
+          <button
+            ref={aiButtonRef}
+            type="button"
+            onClick={() => setShowAIPanel(v => !v)}
+            className="inline-flex items-center gap-1.5 rounded-xl border border-[#DA7B93]/50 bg-[#DA7B93]/10 px-2.5 py-2 text-sm font-medium text-[#DA7B93] transition-colors hover:bg-[#DA7B93]/20 sm:px-3"
+          >
+            <Sparkles size={14} />
+            <span className="hidden sm:inline text-xs">AI</span>
+          </button>
+          <QuickAIPanel isOpen={showAIPanel} onClose={() => setShowAIPanel(false)} anchorRef={aiButtonRef} />
+        </div>
+
         <Link
           to="/transactions/new"
-          className="flex items-center gap-1.5 rounded-xl bg-[#5DCAA5] px-4 py-2 text-sm font-medium text-[#0d1b26] transition-colors hover:bg-[#71d9b6]"
+          className="inline-flex items-center gap-1.5 rounded-xl bg-[#5DCAA5] px-2.5 py-2 text-sm font-medium text-[#0d1b26] transition-colors hover:bg-[#71d9b6] sm:px-4"
         >
           <Plus size={16} />
-          Добавить
+          <span className="hidden sm:inline">Добавить</span>
         </Link>
 
         {/* Notifications bell */}
@@ -61,7 +91,7 @@ export function Header() {
           {showAlerts && (
             <>
               <div className="fixed inset-0" onClick={() => setShowAlerts(false)} />
-              <div className="absolute right-0 top-12 z-50 w-80 overflow-hidden rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.94)] shadow-[0_24px_64px_rgba(0,0,0,0.45)] backdrop-blur-xl">
+              <div className="absolute right-0 top-12 z-50 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.94)] shadow-[0_24px_64px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:w-80">
                 <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
                   <span className="text-sm font-semibold text-white">Уведомления</span>
                   <button onClick={() => setShowAlerts(false)} className="rounded-lg p-1 hover:bg-white/10">
@@ -70,7 +100,7 @@ export function Header() {
                 </div>
                 {alerts.length === 0 ? (
                   <div className="px-4 py-6 text-center text-sm text-white/55">
-                    Всё в порядке ✅
+                    Текущих уведомлений нет
                   </div>
                 ) : (
                   <div className="max-h-72 divide-y divide-white/8 overflow-y-auto">
@@ -108,7 +138,7 @@ export function Header() {
           )}
         </div>
 
-        <div className="w-9 h-9 rounded-xl bg-[#DA7B93] flex items-center justify-center text-white text-sm font-bold">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-[#DA7B93] text-sm font-bold text-white">
           {initials || '?'}
         </div>
       </div>
