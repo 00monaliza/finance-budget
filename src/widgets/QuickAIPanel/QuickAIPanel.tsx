@@ -32,11 +32,14 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [input, setInput] = useState('');
+  const [activeChip, setActiveChip] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [isListening, setIsListening] = useState(false);
   const recognitionRef = useRef<SpeechRecognition | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const isExecutingRef = useRef(false);
+  const isMountedRef = useRef(true);
 
   const now = new Date();
   const year = now.getFullYear();
@@ -88,7 +91,7 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
   };
 
   const invalidateAll = () => {
-    ['transactions', 'transactions-all', 'transactions-year', 'transactions-month-structure', 'totals', 'spent']
+    ['transactions', 'transactions-all', 'transactions-year', 'transactions-month-structure', 'totals', 'spent', 'budgets']
       .forEach(key => queryClient.invalidateQueries({ queryKey: [key] }));
   };
 
@@ -115,13 +118,32 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
     return () => document.removeEventListener('keydown', handler);
   }, [isOpen, onClose]);
 
+  // Stop recognition when panel closes or on unmount
+  useEffect(() => {
+    if (!isOpen) {
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+      setIsListening(false);
+    }
+  }, [isOpen]);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+    return () => {
+      isMountedRef.current = false;
+      recognitionRef.current?.stop();
+      recognitionRef.current = null;
+    };
+  }, []);
+
   // Auto-focus input when opened
   useEffect(() => {
-    if (isOpen) {
-      setStatus({ kind: 'idle' });
-      setInput('');
-      setTimeout(() => inputRef.current?.focus(), 50);
-    }
+    if (!isOpen) return;
+    setStatus({ kind: 'idle' });
+    setInput('');
+    setActiveChip(null);
+    const t = setTimeout(() => inputRef.current?.focus(), 50);
+    return () => clearTimeout(t);
   }, [isOpen]);
 
   const startListening = useCallback(() => {
@@ -179,9 +201,11 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
         categories: categories.map(c => ({ id: c.id, name_ru: c.name_ru, type: c.type })),
       });
     } catch {
-      setStatus({ kind: 'error', msg: 'Не удалось распознать команду.' });
+      if (isMountedRef.current) setStatus({ kind: 'error', msg: 'Не удалось распознать команду.' });
       return;
     }
+
+    if (!isMountedRef.current) return;
 
     if (intent.intent === 'none') {
       setStatus({ kind: 'error', msg: 'Не распознана команда. Попробуйте: "добавь расход 4500 такси".' });
@@ -203,10 +227,12 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
 
       if (intent.intent === 'delete_last_transaction') {
         const scope = intent.delete_transaction?.scope ?? 'last';
-        const candidate = scope === 'last_expense' ? allTxns.find(t => t.type === 'expense')
-          : scope === 'last_income' ? allTxns.find(t => t.type === 'income') : allTxns[0];
+        const sorted = [...allTxns].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        const candidate = scope === 'last_expense' ? sorted.find(t => t.type === 'expense')
+          : scope === 'last_income' ? sorted.find(t => t.type === 'income') : sorted[0];
         if (!candidate) { setStatus({ kind: 'error', msg: 'Транзакций для удаления не найдено.' }); return; }
         await deleteTransaction(candidate.id);
+        if (!isMountedRef.current) return;
         invalidateAll();
         setStatus({ kind: 'success', msg: `Удалена транзакция: ${candidate.type === 'income' ? 'доход' : 'расход'} ${formatCurrency(candidate.amount)}${candidate.description ? ` "${candidate.description}"` : ''}.` });
         return;
@@ -221,6 +247,7 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
         if (!catId) { setStatus({ kind: 'error', msg: 'Не удалось определить категорию. Уточните название.' }); return; }
         const period = (b.period && ['month', 'week', 'year'].includes(b.period)) ? b.period as 'month' | 'week' | 'year' : 'month';
         await upsertBudget({ user_id: user!.id, category_id: catId, limit_amount: limitAmount, period, year: b.year ?? year, month: b.month ?? month, notify_at_pct: 80 });
+        if (!isMountedRef.current) return;
         queryClient.invalidateQueries({ queryKey: ['budgets'] });
         queryClient.invalidateQueries({ queryKey: ['spent'] });
         setStatus({ kind: 'success', msg: `Лимит "${catName}": ${formatCurrency(limitAmount)}.` });
@@ -241,6 +268,7 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
         if (!gName || !Number.isFinite(gTarget) || gTarget <= 0) { setStatus({ kind: 'error', msg: 'Укажите название и сумму. Пример: "создай цель Машина на 3 миллиона".' }); return; }
         const deadline = gDeadline && /^\d{4}-\d{2}-\d{2}$/.test(gDeadline) ? gDeadline : null;
         await createGoal({ user_id: user!.id, name: gName, target_amount: gTarget, current_amount: Number(g.current_amount ?? 0) || 0, deadline, icon: g.icon ?? '🎯', color: g.color ?? '#1D9E75' });
+        if (!isMountedRef.current) return;
         queryClient.invalidateQueries({ queryKey: ['goals'] });
         setStatus({ kind: 'success', msg: `Цель "${gName}" создана на ${formatCurrency(gTarget)}${deadline ? ` · до ${deadline}` : ''}.` });
         return;
@@ -257,13 +285,14 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
         const categoryName = categoryId ? categories.find(c => c.id === categoryId)?.name_ru ?? null : null;
         if (type !== 'transfer' && !categoryId) { setStatus({ kind: 'error', msg: 'Не удалось определить категорию. Уточните.' }); return; }
         await createTransaction({ user_id: user!.id, amount, type, category_id: type === 'transfer' ? null : categoryId, description: tx.description?.trim() || null, date, account, tags: null, ai_categorized: true });
+        if (!isMountedRef.current) return;
         invalidateAll();
         const typeLabel = type === 'income' ? 'доход' : type === 'transfer' ? 'перевод' : 'расход';
         setStatus({ kind: 'success', msg: `Добавлен ${typeLabel} ${formatCurrency(amount)}${categoryName ? ` · ${categoryName}` : ''}.` });
         return;
       }
     } catch (err) {
-      setStatus({ kind: 'error', msg: err instanceof Error ? err.message : 'Произошла ошибка.' });
+      if (isMountedRef.current) setStatus({ kind: 'error', msg: err instanceof Error ? err.message : 'Произошла ошибка.' });
     }
   };
 
@@ -276,8 +305,9 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
 
   const submit = () => {
     const trimmed = input.trim();
-    if (!trimmed || status.kind === 'executing') return;
-    executeCommand(trimmed);
+    if (!trimmed || status.kind === 'executing' || isExecutingRef.current) return;
+    isExecutingRef.current = true;
+    executeCommand(trimmed).finally(() => { isExecutingRef.current = false; });
   };
 
   if (!isOpen) return null;
@@ -305,8 +335,13 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
             <button
               key={chip.label}
               type="button"
-              onClick={() => { setInput(chip.template); inputRef.current?.focus(); }}
-              className="rounded-full border border-white/15 bg-white/6 px-3 py-1 text-xs text-white/70 transition-colors hover:border-white/30 hover:text-white"
+              onClick={() => { setInput(chip.template); setActiveChip(chip.label); inputRef.current?.focus(); }}
+              className={cn(
+                'rounded-full border px-3 py-1 text-xs transition-colors',
+                activeChip === chip.label
+                  ? 'border-[#DA7B93]/60 bg-[#DA7B93]/15 text-[#DA7B93]'
+                  : 'border-white/15 bg-white/6 text-white/70 hover:border-white/30 hover:text-white'
+              )}
             >
               {chip.label}
             </button>
