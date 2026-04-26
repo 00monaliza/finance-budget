@@ -8,7 +8,7 @@ export default function AIAdvisorPage() {
 
   return (
     <div className="space-y-3">
-      <div className="flex justify-end">
+      <div className="flex justify-start sm:justify-end">
         <button
           type="button"
           onClick={refreshPage}

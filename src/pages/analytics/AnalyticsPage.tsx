@@ -64,7 +64,7 @@ export default function AnalyticsPage() {
   return (
     <div className="space-y-6 text-white">
       {/* Year selector */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-3">
         <h2 className="text-lg font-semibold text-white">Аналитика</h2>
         <div className="flex items-center gap-1 rounded-xl border border-white/15 bg-white/6 px-1 py-1">
           <button
@@ -81,7 +81,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* Year totals */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {[
           { label: 'Доходы за год',  value: formatCurrency(totalIncome),  color: '#1D9E75' },
           { label: 'Расходы за год', value: formatCurrency(totalExpense),  color: '#E24B4A' },
@@ -98,25 +98,29 @@ export default function AnalyticsPage() {
       {/* Monthly bar chart */}
       <Card>
         <h3 className="text-sm font-semibold text-white mb-4">Доходы и расходы по месяцам</h3>
-        <ResponsiveContainer width="100%" height={240}>
-          <BarChart data={monthlyData} barGap={4}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" vertical={false} />
-            <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }} axisLine={false} tickLine={false} />
-            <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }} axisLine={false} tickLine={false} width={64}
-              tickFormatter={v => v > 0 ? `${(v / 1000).toFixed(0)}k` : '0'} />
-            <Tooltip
-              contentStyle={{
-                background: 'rgba(13, 27, 38, 0.95)',
-                border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '12px',
-                color: '#fff',
-              }}
-              formatter={(v) => formatCurrency(Number(v))}
-            />
-            <Bar dataKey="income"  fill="#1D9E75" radius={[4, 4, 0, 0]} name="Доходы"  maxBarSize={32} />
-            <Bar dataKey="expense" fill="#E24B4A" radius={[4, 4, 0, 0]} name="Расходы" maxBarSize={32} />
-          </BarChart>
-        </ResponsiveContainer>
+        <div className="overflow-x-auto">
+          <div className="min-w-[34rem]">
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={monthlyData} barGap={4}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.12)" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: 'rgba(255,255,255,0.7)' }} axisLine={false} tickLine={false} width={64}
+                  tickFormatter={v => v > 0 ? `${(v / 1000).toFixed(0)}k` : '0'} />
+                <Tooltip
+                  contentStyle={{
+                    background: 'rgba(13, 27, 38, 0.95)',
+                    border: '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '12px',
+                    color: '#fff',
+                  }}
+                  formatter={(v) => formatCurrency(Number(v))}
+                />
+                <Bar dataKey="income"  fill="#1D9E75" radius={[4, 4, 0, 0]} name="Доходы"  maxBarSize={32} />
+                <Bar dataKey="expense" fill="#E24B4A" radius={[4, 4, 0, 0]} name="Расходы" maxBarSize={32} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </Card>
 
       {/* Pie + category list */}
@@ -126,26 +130,30 @@ export default function AnalyticsPage() {
           {pieData.length === 0 ? (
             <p className="text-sm text-white/55 text-center py-8">Нет данных</p>
           ) : (
-            <ResponsiveContainer width="100%" height={220}>
-              <PieChart>
-                <Pie
-                  data={pieData}
-                  dataKey="amount"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={55}
-                  outerRadius={90}
-                  paddingAngle={3}
-                >
-                  {pieData.map((entry, i) => (
-                    <Cell key={i} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-white/70">{v}</span>} />
-                <Tooltip formatter={(v) => formatCurrency(Number(v))} />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="overflow-x-auto">
+              <div className="min-w-[20rem]">
+                <ResponsiveContainer width="100%" height={220}>
+                  <PieChart>
+                    <Pie
+                      data={pieData}
+                      dataKey="amount"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={55}
+                      outerRadius={90}
+                      paddingAngle={3}
+                    >
+                      {pieData.map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Legend iconType="circle" iconSize={8} formatter={(v) => <span className="text-xs text-white/70">{v}</span>} />
+                    <Tooltip formatter={(v) => formatCurrency(Number(v))} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
           )}
         </Card>
 

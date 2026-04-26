@@ -1,0 +1,80 @@
+<h2>Что показывать внутри панели?</h2>
+<p class="subtitle">Dropdown открылся — что видит пользователь кроме поля ввода?</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="minimal" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0d1b26;border-radius:12px;padding:12px;font-family:system-ui;min-height:180px;position:relative;">
+        <div style="width:210px;margin:0 auto;background:#1e3346;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+          <div style="font-size:10px;color:#DA7B93;font-weight:700;margin-bottom:8px;">✨ AI-команда</div>
+          <!-- Input -->
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;height:32px;display:flex;align-items:center;padding:0 8px;margin-bottom:8px;">
+            <span style="font-size:9px;color:rgba(255,255,255,0.3);flex:1;">добавь расход 4500 такси...</span>
+            <span style="font-size:12px;opacity:0.5;">🎤</span>
+          </div>
+          <!-- Send button -->
+          <div style="background:#5DCAA5;border-radius:8px;height:26px;display:flex;align-items:center;justify-content:center;font-size:9px;color:#0d1b26;font-weight:700;">Выполнить →</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Минималистично</h3>
+      <p>Только поле ввода + кнопка отправить + микрофон. Чисто, быстро, без отвлечений. Пользователь сразу пишет/говорит.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="chips" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0d1b26;border-radius:12px;padding:12px;font-family:system-ui;min-height:180px;">
+        <div style="width:220px;margin:0 auto;background:#1e3346;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+          <div style="font-size:10px;color:#DA7B93;font-weight:700;margin-bottom:8px;">✨ AI-команда</div>
+          <!-- Quick chips -->
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px;">
+            <div style="background:rgba(93,202,165,0.12);border:1px solid rgba(93,202,165,0.3);border-radius:20px;padding:2px 8px;font-size:8px;color:#5DCAA5;">💸 расход</div>
+            <div style="background:rgba(29,158,117,0.12);border:1px solid rgba(29,158,117,0.3);border-radius:20px;padding:2px 8px;font-size:8px;color:#1D9E75;">💰 доход</div>
+            <div style="background:rgba(218,123,147,0.12);border:1px solid rgba(218,123,147,0.3);border-radius:20px;padding:2px 8px;font-size:8px;color:#DA7B93;">🎯 цель</div>
+            <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.15);border-radius:20px;padding:2px 8px;font-size:8px;color:rgba(255,255,255,0.5);">📊 лимит</div>
+          </div>
+          <!-- Input -->
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;height:28px;display:flex;align-items:center;padding:0 8px;margin-bottom:6px;">
+            <span style="font-size:9px;color:rgba(255,255,255,0.3);flex:1;">или напишите команду...</span>
+            <span style="font-size:11px;opacity:0.5;">🎤</span>
+          </div>
+          <div style="background:#5DCAA5;border-radius:8px;height:22px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#0d1b26;font-weight:700;">Выполнить</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Быстрые чипы + поле ввода</h3>
+      <p>Чипы-подсказки (расход / доход / цель / лимит) для быстрого выбора. Нажал на чип — поле заполнилось шаблоном. Удобно для новичков.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="history" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0d1b26;border-radius:12px;padding:12px;font-family:system-ui;min-height:180px;">
+        <div style="width:220px;margin:0 auto;background:#1e3346;border:1px solid rgba(255,255,255,0.12);border-radius:12px;padding:12px;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+          <div style="font-size:10px;color:#DA7B93;font-weight:700;margin-bottom:8px;">✨ AI-команда</div>
+          <!-- Input -->
+          <div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;height:28px;display:flex;align-items:center;padding:0 8px;margin-bottom:8px;">
+            <span style="font-size:9px;color:rgba(255,255,255,0.3);flex:1;">добавь расход...</span>
+            <span style="font-size:11px;opacity:0.5;">🎤</span>
+          </div>
+          <!-- Recent commands -->
+          <div style="font-size:8px;color:rgba(255,255,255,0.35);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.05em;">Недавние</div>
+          <div style="display:flex;flex-direction:column;gap:3px;margin-bottom:6px;">
+            <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:4px 6px;font-size:8px;color:rgba(255,255,255,0.55);">💸 расход 4500 такси</div>
+            <div style="background:rgba(255,255,255,0.04);border-radius:6px;padding:4px 6px;font-size:8px;color:rgba(255,255,255,0.55);">🎯 цель Машина 3 млн</div>
+          </div>
+          <div style="background:#5DCAA5;border-radius:8px;height:22px;display:flex;align-items:center;justify-content:center;font-size:8px;color:#0d1b26;font-weight:700;">Выполнить</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Поле + история команд</h3>
+      <p>Показывает последние выполненные команды. Можно повторить одним кликом. Удобно если часто делаешь одно и то же.</p>
+    </div>
+  </div>
+
+</div>

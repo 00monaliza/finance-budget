@@ -42,16 +42,16 @@ function StatCard({
   color: string;
 }) {
   return (
-    <div className={`${glassClass} flex items-center gap-4 p-5`}>
+    <div className={`${glassClass} flex items-center gap-3 p-4 sm:gap-4 sm:p-5`}>
       <div
-        className="h-12 w-12 shrink-0 rounded-2xl flex items-center justify-center"
+        className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl sm:h-12 sm:w-12"
         style={{ backgroundColor: `${color}22` }}
       >
         <Icon size={22} style={{ color }} />
       </div>
       <div>
         <p className="text-xs font-medium text-white/65">{label}</p>
-        <p className="mt-1 text-2xl font-semibold text-white">{value}</p>
+        <p className="mt-1 text-xl font-semibold text-white sm:text-2xl">{value}</p>
         {sub && <p className="mt-1 text-xs text-white/55">{sub}</p>}
       </div>
     </div>
@@ -140,14 +140,14 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-6 text-white">
-        <div className="flex items-end justify-between gap-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight md:text-3xl">Финансовый дашборд</h1>
             <p className="mt-1 text-sm text-white/65">Актуальные метрики, тренды и последние операции</p>
           </div>
           <Link
             to="/ai"
-            className="inline-flex items-center gap-2 rounded-xl border border-white/15 bg-[rgba(255,255,255,0.06)] px-3 py-2 text-sm text-white/85 transition hover:bg-[rgba(255,255,255,0.1)]"
+            className="inline-flex w-fit items-center gap-2 self-start rounded-xl border border-white/15 bg-[rgba(255,255,255,0.06)] px-3 py-2 text-sm text-white/85 transition hover:bg-[rgba(255,255,255,0.1)] sm:self-auto"
           >
             AI обзор <ArrowRight size={14} color={COLORS.ai} />
           </Link>
@@ -184,9 +184,9 @@ export default function DashboardPage() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-          <section className={`${glassClass} p-5 lg:col-span-2`}>
+          <section className={`${glassClass} p-4 sm:p-5 lg:col-span-2`}>
             <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.12em] text-white/70">Динамика 7 дней</h2>
-            <ResponsiveContainer width="100%" height={260}>
+            <ResponsiveContainer width="100%" height={220}>
               <LineChart data={chartData} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
                 <CartesianGrid stroke="rgba(255,255,255,0.1)" strokeDasharray="4 4" />
                 <XAxis
@@ -199,7 +199,7 @@ export default function DashboardPage() {
                   tick={{ fill: 'rgba(255,255,255,0.65)', fontSize: 11 }}
                   axisLine={false}
                   tickLine={false}
-                  width={62}
+                  width={48}
                   tickFormatter={value => (value > 0 ? `${Math.round(value / 1000)}k` : '0')}
                 />
                 <Tooltip
@@ -234,13 +234,13 @@ export default function DashboardPage() {
             </ResponsiveContainer>
           </section>
 
-          <section className={`${glassClass} p-5`}>
+          <section className={`${glassClass} p-4 sm:p-5`}>
             <h2 className="mb-4 text-sm font-medium uppercase tracking-[0.12em] text-white/70">Расходы по категориям</h2>
             <div className="flex items-center justify-center">
               {monthTxnsLoading ? (
                 <div className="h-[220px] w-full animate-pulse rounded-xl bg-white/5" />
               ) : (
-                <ResponsiveContainer width="100%" height={220}>
+                <ResponsiveContainer width="100%" height={200}>
                   <PieChart>
                     <Pie
                       data={donutData}
@@ -262,12 +262,12 @@ export default function DashboardPage() {
             </div>
             <div className="space-y-2">
               {donutData.map(item => (
-                <div key={item.name} className="flex items-center justify-between rounded-lg bg-white/5 px-3 py-2 text-sm">
-                  <span className="flex items-center gap-2 text-white/80">
+                <div key={item.name} className="flex items-center justify-between gap-3 rounded-lg bg-white/5 px-3 py-2 text-sm">
+                  <span className="flex min-w-0 items-center gap-2 text-white/80">
                     <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: item.color }} />
-                    {item.name}
+                    <span className="truncate">{item.name}</span>
                   </span>
-                  <span className="font-medium text-white">
+                  <span className="shrink-0 font-medium text-white">
                     {item.name === 'Нет данных' ? '0' : formatCurrency(item.value)}
                   </span>
                 </div>
@@ -277,7 +277,7 @@ export default function DashboardPage() {
         </div>
 
         <section className={`${glassClass} overflow-hidden`}>
-          <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-4 sm:px-5">
             <h2 className="text-sm font-medium uppercase tracking-[0.12em] text-white/70">Последние транзакции</h2>
             <Link to="/transactions" className="text-sm text-white/75 transition hover:text-white">
               Открыть все
@@ -285,13 +285,13 @@ export default function DashboardPage() {
           </div>
 
           {txnsLoading ? (
-            <div className="space-y-3 p-5">
+            <div className="space-y-3 p-4 sm:p-5">
               {Array.from({ length: 4 }, (_, i) => (
                 <div key={i} className="h-12 animate-pulse rounded-xl bg-white/5" />
               ))}
             </div>
           ) : recentTxns.length === 0 ? (
-            <p className="px-5 py-8 text-center text-sm text-white/60">Транзакций пока нет</p>
+            <p className="px-4 py-8 text-center text-sm text-white/60 sm:px-5">Транзакций пока нет</p>
           ) : (
             <div className="divide-y divide-white/8">
               {recentTxns.slice(0, 6).map(transaction => {
@@ -299,9 +299,9 @@ export default function DashboardPage() {
                 const amountColor = isIncome ? COLORS.income : COLORS.expense;
 
                 return (
-                  <div key={transaction.id} className="flex items-center gap-4 px-5 py-3">
+                  <div key={transaction.id} className="flex items-center gap-3 px-4 py-3 sm:gap-4 sm:px-5">
                     <div
-                      className="flex h-10 w-10 items-center justify-center rounded-xl text-base"
+                      className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-base"
                       style={{ backgroundColor: `${transaction.categories?.color ?? '#888888'}33` }}
                     >
                       {transaction.categories?.icon ?? '📦'}
@@ -310,12 +310,12 @@ export default function DashboardPage() {
                       <p className="truncate text-sm font-medium text-white/95">
                         {transaction.description ?? transaction.categories?.name_ru ?? 'Без описания'}
                       </p>
-                      <p className="text-xs text-white/50">{formatDateShort(transaction.date)}</p>
+                      <p className="mt-0.5 text-xs text-white/50">{formatDateShort(transaction.date)}</p>
                     </div>
-                    <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/70">
+                    <span className="hidden rounded-full bg-white/10 px-2.5 py-1 text-xs text-white/70 sm:inline-flex">
                       {isIncome ? 'Доход' : 'Расход'}
                     </span>
-                    <span className="text-sm font-semibold" style={{ color: amountColor }}>
+                    <span className="shrink-0 text-sm font-semibold" style={{ color: amountColor }}>
                       {isIncome ? '+' : '-'}{formatCurrency(transaction.amount)}
                     </span>
                   </div>

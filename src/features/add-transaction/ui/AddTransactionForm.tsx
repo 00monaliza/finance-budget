@@ -167,7 +167,7 @@ export function AddTransactionForm() {
   };
 
   return (
-    <div className="max-w-lg mx-auto">
+    <div className="mx-auto w-full max-w-2xl">
       <Card>
         <h2 className="text-lg font-semibold text-white mb-5">Новая транзакция</h2>
 
@@ -179,7 +179,7 @@ export function AddTransactionForm() {
               name="type"
               control={control}
               render={({ field }) => (
-                <div className="flex gap-2">
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                   {(['expense', 'income', 'transfer'] as const).map(type => (
                     <button
                       key={type}
@@ -260,7 +260,7 @@ export function AddTransactionForm() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
                   {filteredCategories.map(cat => {
                     const selected = selectedCategoryId === cat.id;
                     return (
@@ -307,8 +307,8 @@ export function AddTransactionForm() {
           </div>
 
           {/* Date & Account row */}
-          <div className="flex gap-3">
-            <div className="flex-1">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div>
               <Input
                 label="Дата"
                 type="date"
@@ -316,7 +316,7 @@ export function AddTransactionForm() {
                 {...register('date')}
               />
             </div>
-            <div className="flex-1">
+            <div>
               <label className="block text-sm font-medium text-white/80 mb-1.5">Счёт</label>
               <select
                 {...register('account')}
@@ -335,7 +335,7 @@ export function AddTransactionForm() {
             </div>
           )}
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row">
             <Button
               type="button"
               variant="secondary"
@@ -371,7 +371,7 @@ export function AddTransactionForm() {
                 onChange={(e) => setNewCategoryName(e.target.value)}
               />
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-white/80">Тип</label>
                   <select
@@ -416,7 +416,7 @@ export function AddTransactionForm() {
                   categories.map((cat) => (
                     <div
                       key={cat.id}
-                      className="flex items-center justify-between rounded-xl border border-white/12 bg-white/5 px-3 py-2.5"
+                      className="flex flex-col gap-2 rounded-xl border border-white/12 bg-white/5 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
                     >
                       <div className="flex items-center gap-2.5">
                         <span className="text-lg leading-none">{cat.icon}</span>

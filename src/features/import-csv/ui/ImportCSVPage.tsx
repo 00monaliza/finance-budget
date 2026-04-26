@@ -74,7 +74,7 @@ export function ImportCSVPage() {
 
   if (done) {
     return (
-      <div className="max-w-lg mx-auto">
+      <div className="mx-auto w-full max-w-lg">
         <Card className="text-center py-12">
           <CheckCircle size={48} className="text-[#1D9E75] mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white">Импорт завершён!</h2>
@@ -88,7 +88,7 @@ export function ImportCSVPage() {
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4 text-white">
+    <div className="mx-auto w-full max-w-3xl space-y-4 text-white">
       <Card>
         <h2 className="text-lg font-semibold text-white mb-1">Импорт выписки Kaspi Bank</h2>
         <p className="text-sm text-white/60 mb-4">
@@ -100,7 +100,7 @@ export function ImportCSVPage() {
           onDrop={onDrop}
           onDragOver={e => e.preventDefault()}
           onClick={() => fileRef.current?.click()}
-          className="cursor-pointer rounded-xl border-2 border-dashed border-white/20 p-8 text-center transition-colors hover:border-[#5DCAA5]/60 hover:bg-white/6"
+          className="cursor-pointer rounded-xl border-2 border-dashed border-white/20 p-6 text-center transition-colors hover:border-[#5DCAA5]/60 hover:bg-white/6 sm:p-8"
         >
           <Upload size={32} className="mx-auto text-white/35 mb-3" />
           <p className="text-sm font-medium text-white/75">
@@ -119,7 +119,7 @@ export function ImportCSVPage() {
 
       {rows.length > 0 && (
         <Card padding="none">
-          <div className="flex items-center justify-between px-5 py-4 border-b border-white/10">
+          <div className="flex flex-col gap-3 border-b border-white/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <div className="flex items-center gap-2">
               <FileText size={16} className="text-white/45" />
               <span className="text-sm font-medium text-white/80">
@@ -127,7 +127,7 @@ export function ImportCSVPage() {
               </span>
               <Badge variant="neutral">{selectedCount} выбрано</Badge>
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 sm:justify-end">
               <button
                 onClick={() => setRows(prev => prev.map(r => ({ ...r, _selected: true })))}
                 className="text-xs text-[#5DCAA5] hover:underline"
@@ -149,30 +149,41 @@ export function ImportCSVPage() {
                 key={i}
                 onClick={() => toggleRow(i)}
                 className={cn(
-                  'flex items-center gap-3 px-5 py-3 cursor-pointer transition-colors',
+                  'cursor-pointer px-4 py-3 transition-colors sm:px-5',
                   row._selected ? 'bg-white/6' : 'bg-transparent opacity-55'
                 )}
               >
-                <input
-                  type="checkbox"
-                  checked={row._selected}
-                  onChange={() => toggleRow(i)}
-                  onClick={e => e.stopPropagation()}
-                  className="rounded"
-                />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-white/90 truncate">{row.description || '—'}</p>
-                  <p className="text-xs text-white/45">{row.date}</p>
+                <div className="flex items-start gap-3">
+                  <input
+                    type="checkbox"
+                    checked={row._selected}
+                    onChange={() => toggleRow(i)}
+                    onClick={e => e.stopPropagation()}
+                    className="mt-1 rounded"
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm text-white/90">{row.description || '—'}</p>
+                    <p className="mt-0.5 text-xs text-white/45">{row.date}</p>
+                  </div>
+                  <span className={cn(
+                    'shrink-0 text-sm font-semibold sm:hidden',
+                    row.type === 'income' ? 'text-[#1D9E75]' : 'text-[#E24B4A]'
+                  )}>
+                    {row.type === 'income' ? '+' : '−'}{formatCurrency(row.amount ?? 0)}
+                  </span>
                 </div>
-                <Badge variant={row.type as 'income' | 'expense'}>
-                  {row.type === 'income' ? 'Доход' : 'Расход'}
-                </Badge>
-                <span className={cn(
-                  'text-sm font-semibold w-28 text-right',
-                  row.type === 'income' ? 'text-[#1D9E75]' : 'text-[#E24B4A]'
-                )}>
-                  {row.type === 'income' ? '+' : '−'}{formatCurrency(row.amount ?? 0)}
-                </span>
+
+                <div className="mt-2 flex items-center justify-between gap-2 sm:mt-1 sm:justify-end">
+                  <Badge variant={row.type as 'income' | 'expense'}>
+                    {row.type === 'income' ? 'Доход' : 'Расход'}
+                  </Badge>
+                  <span className={cn(
+                    'hidden w-28 text-right text-sm font-semibold sm:block',
+                    row.type === 'income' ? 'text-[#1D9E75]' : 'text-[#E24B4A]'
+                  )}>
+                    {row.type === 'income' ? '+' : '−'}{formatCurrency(row.amount ?? 0)}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
@@ -184,7 +195,7 @@ export function ImportCSVPage() {
             </div>
           )}
 
-          <div className="flex items-center justify-between px-5 py-4 border-t border-white/10">
+          <div className="flex flex-col gap-3 border-t border-white/10 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
             <button
               onClick={() => { setRows([]); setFileName(''); }}
               className="flex items-center gap-1.5 text-sm text-white/50 hover:text-white/80"
@@ -208,7 +219,7 @@ export function ImportCSVPage() {
           <AlertCircle size={18} className="text-[#EF9F27] shrink-0 mt-0.5" />
           <div>
             <p className="text-sm font-medium text-[#f4c46b]">Формат CSV</p>
-            <p className="text-xs text-[#f0d8a9] mt-1">
+            <p className="mt-1 text-xs text-[#f0d8a9]">
               Ожидаемый формат колонок: <code className="rounded bg-[#EF9F27]/20 px-1">Дата;Описание;Сумма</code><br />
               Категории можно назначить вручную после импорта.
             </p>

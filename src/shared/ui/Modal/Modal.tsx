@@ -27,7 +27,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-3 sm:items-center sm:p-4">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-black/40 backdrop-blur-sm"
@@ -36,11 +36,11 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
 
       {/* Dialog */}
       <div className={cn(
-        'relative z-10 w-full rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.92)] text-white shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl',
+        'relative z-10 max-h-[calc(100dvh-1.5rem)] w-full overflow-hidden rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.92)] text-white shadow-[0_30px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:max-h-[calc(100dvh-3rem)]',
         sizeStyles[size]
       )}>
         {title && (
-          <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-white/10">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 pb-3 pt-4 sm:px-6 sm:pb-4 sm:pt-5">
             <h2 className="text-lg font-semibold text-white">{title}</h2>
             <button
               onClick={onClose}
@@ -50,7 +50,7 @@ export function Modal({ open, onClose, title, children, size = 'md' }: ModalProp
             </button>
           </div>
         )}
-        <div className="p-6">{children}</div>
+        <div className="max-h-[calc(100dvh-9rem)] overflow-y-auto p-4 sm:p-6">{children}</div>
       </div>
     </div>
   );

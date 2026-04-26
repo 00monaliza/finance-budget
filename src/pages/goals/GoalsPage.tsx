@@ -61,12 +61,12 @@ export default function GoalsPage() {
 
   return (
     <div className="space-y-4 text-white">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Цели накоплений</h2>
           <p className="text-sm text-white/55">{goals.length} {goals.length === 1 ? 'цель' : 'целей'}</p>
         </div>
-        <Button size="sm" leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)}>
+        <Button size="sm" leftIcon={<Plus size={14} />} onClick={() => setModalOpen(true)} className="w-full sm:w-auto">
           Новая цель
         </Button>
       </div>
@@ -93,7 +93,7 @@ export default function GoalsPage() {
               <Card key={goal.id} className="group relative">
                 <button
                   onClick={() => deleteMutation.mutate(goal.id)}
-                  className="absolute top-4 right-4 rounded-lg p-1.5 text-white/30 opacity-0 transition-all hover:bg-[#E24B4A]/10 hover:text-[#E24B4A] group-hover:opacity-100"
+                  className="absolute right-4 top-4 rounded-lg p-1.5 text-white/45 transition-all hover:bg-[#E24B4A]/10 hover:text-[#E24B4A] sm:opacity-0 sm:group-hover:opacity-100"
                 >
                   <Trash2 size={14} />
                 </button>
@@ -151,7 +151,7 @@ export default function GoalsPage() {
           <Input label="Название" placeholder="Например: Новая машина" value={form.name}
             onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Input label="Цель (₸)" type="number" placeholder="500 000" value={form.target}
               onChange={e => setForm(f => ({ ...f, target: e.target.value }))} />
             <Input label="Уже накоплено" type="number" placeholder="0" value={form.current}
@@ -177,7 +177,7 @@ export default function GoalsPage() {
 
           <div>
             <label className="block text-sm font-medium text-white/80 mb-2">Цвет</label>
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               {COLORS.map(color => (
                 <button key={color} type="button" onClick={() => setForm(f => ({ ...f, color }))}
                   className={cn('w-7 h-7 rounded-full border-2 transition-all',
@@ -188,7 +188,7 @@ export default function GoalsPage() {
             </div>
           </div>
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row">
             <Button variant="secondary" className="flex-1" onClick={() => { setModalOpen(false); setForm(DEFAULT_FORM); }}>Отмена</Button>
             <Button className="flex-1" loading={createMutation.isPending}
               disabled={!form.name || !form.target || parseFloat(form.target) <= 0}
@@ -204,7 +204,7 @@ export default function GoalsPage() {
         <div className="space-y-4">
           <Input label="Сумма (₸)" type="number" placeholder="10 000" value={depositAmount}
             onChange={e => setDepositAmount(e.target.value)} />
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <Button variant="secondary" className="flex-1" leftIcon={<MinusCircle size={16} />}
               loading={depositMutation.isPending}
               disabled={!depositAmount || parseFloat(depositAmount) <= 0}

@@ -85,7 +85,7 @@ export function BudgetOverview() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-lg font-semibold text-white">Бюджеты</h2>
           <p className="text-sm text-white/55 capitalize">{monthLabel}</p>
@@ -95,6 +95,7 @@ export function BudgetOverview() {
           leftIcon={<Plus size={14} />}
           onClick={() => setModalOpen(true)}
           disabled={availableCategories.length === 0}
+          className="w-full sm:w-auto"
         >
           Добавить
         </Button>
@@ -146,7 +147,7 @@ export function BudgetOverview() {
                   )}
                   <button
                     onClick={() => deleteMutation.mutate(budget.id)}
-                    className="rounded-lg p-1.5 text-white/30 opacity-0 transition-all hover:bg-[#E24B4A]/10 hover:text-[#E24B4A] group-hover:opacity-100"
+                    className="rounded-lg p-1.5 text-white/45 transition-all hover:bg-[#E24B4A]/10 hover:text-[#E24B4A] sm:opacity-0 sm:group-hover:opacity-100"
                   >
                     <Trash2 size={14} />
                   </button>
@@ -197,7 +198,7 @@ export function BudgetOverview() {
             onChange={e => setLimitInput(e.target.value)}
           />
 
-          <div className="flex gap-3 pt-1">
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row">
             <Button variant="secondary" className="flex-1" onClick={() => setModalOpen(false)}>
               Отмена
             </Button>

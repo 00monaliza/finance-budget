@@ -26,7 +26,12 @@
 }
 
 body {
+  margin: 0;
   font-family: var(--font-body), system-ui, sans-serif;
   background-color: #0d1b26;
   color: #ffffff;
+}
+
+#root {
+  min-height: 100dvh;
 }
