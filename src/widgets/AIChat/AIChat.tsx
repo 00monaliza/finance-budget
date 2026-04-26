@@ -1,13 +1,17 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Send, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Mic, MicOff, Loader2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
-import { fetchAllTransactions } from '@/entities/transaction';
-import { fetchBudgets, fetchSpentByCategory } from '@/entities/budget';
-import { askAI } from '@/shared/api/gemini';
+import { createTransaction, fetchAllTransactions, deleteTransaction } from '@/entities/transaction';
+import { fetchCategories } from '@/entities/category';
+import { fetchBudgets, fetchSpentByCategory, upsertBudget } from '@/entities/budget';
+import { createGoal } from '@/entities/goal';
+import { askAI, detectChatIntent, type ChatCommandIntent } from '@/shared/api/gemini';
 import { supabase } from '@/shared/api/supabase';
 import type { BudgetContext } from '@/shared/types/budget-context';
 import { cn } from '@/shared/lib/cn';
+import { formatCurrency } from '@/shared/lib/formatCurrency';
 
 interface ChatMessage {
   id: string;
@@ -22,6 +26,8 @@ const QUICK_QUESTIONS = [
   'Достигну ли я своих целей?',
   'Оцени мой финансовый план',
 ];
+
+const COMMANDS_HELP = `Вот что я умею:\n\n💸 Транзакции:\n• "добавь расход 4500 такси"\n• "добавь доход 200000 зарплата"\n• "удали последний расход"\n\n📊 Бюджет:\n• "поставь лимит 50000 на еду"\n• "измени лимит развлечений на 30000"\n\n🎯 Цели:\n• "создай цель Машина на 3 миллиона до 2027-01-01"\n• "добавь цель Отпуск 500000"\n\n🗂️ Управление:\n• "открой управление транзакциями"\n\n❓ Советы:\n• "как я трачу деньги?"\n• "где сократить расходы?"`;
 
 async function fetchChatHistory(userId: string): Promise<ChatMessage[]> {
   const { data, error } = await supabase
@@ -40,8 +46,13 @@ async function saveChatMessage(userId: string, role: 'user' | 'assistant', conte
 
 export function AIChat() {
   const { user } = useAuthStore();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [input, setInput] = useState('');
+  const [isExecuting, setIsExecuting] = useState(false);
+  const [isListening, setIsListening] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
   const now   = new Date();
   const year  = now.getFullYear();
@@ -59,6 +70,11 @@ export function AIChat() {
     queryKey: ['transactions-all', user?.id],
     queryFn: () => fetchAllTransactions(user!.id),
     enabled: !!user,
+  });
+
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: fetchCategories,
   });
 
   const { data: budgets = [], isLoading: budgetsLoading } = useQuery({
@@ -110,11 +126,9 @@ export function AIChat() {
 
     for (const transaction of monthTxns) {
       if (transaction.type !== 'expense') continue;
-
       const key = transaction.category_id ?? 'uncategorized';
       const name = transaction.categories?.name_ru ?? 'Без категории';
       const existing = map.get(key);
-
       if (existing) {
         existing.amount += transaction.amount;
       } else {
@@ -141,15 +155,85 @@ export function AIChat() {
   );
 
   const isFinancialDataLoading = allTxnsLoading || budgetsLoading || spentLoading;
+  const isDataLoading = isFinancialDataLoading || categoriesLoading;
+  const isBusy = isExecuting || isDataLoading;
+
+  const normalize = (value: string) => value.toLowerCase().replace(/\s+/g, ' ').trim();
+
+  const resolveCategoryId = (
+    txType: 'income' | 'expense' | 'transfer',
+    categoryId?: string,
+    categoryName?: string,
+  ): string | null => {
+    if (txType === 'transfer') return null;
+    const allowed = categories.filter(c => c.type === txType || c.type === 'both');
+    if (categoryId && allowed.some(c => c.id === categoryId)) return categoryId;
+    if (categoryName) {
+      const source = normalize(categoryName);
+      const matched = allowed.find(c => {
+        const current = normalize(c.name_ru);
+        return current.includes(source) || source.includes(current);
+      });
+      if (matched) return matched.id;
+    }
+    return allowed[0]?.id ?? null;
+  };
+
+  const invalidateAll = () => {
+    queryClient.invalidateQueries({ queryKey: ['transactions'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions-all'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions-year'] });
+    queryClient.invalidateQueries({ queryKey: ['transactions-month-structure'] });
+    queryClient.invalidateQueries({ queryKey: ['totals'] });
+    queryClient.invalidateQueries({ queryKey: ['spent'] });
+  };
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [history]);
 
+  const invalidateChat = () => queryClient.invalidateQueries({ queryKey: ['ai-chats'] });
+
+  const saveMsg = async (role: 'user' | 'assistant', content: string) => {
+    if (!user) return;
+    await saveChatMessage(user.id, role, content);
+    invalidateChat();
+  };
+
+  // Voice input
+  const startListening = useCallback(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const w = window as any;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR: new () => any = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    if (!SR) {
+      alert('Ваш браузер не поддерживает голосовой ввод. Используйте Chrome или Edge.');
+      return;
+    }
+    const recognition = new SR();
+    recognition.lang = 'ru-RU';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recognition.onresult = (e: any) => {
+      const text = e.results[0][0].transcript;
+      setInput(text);
+    };
+    recognition.onerror = () => setIsListening(false);
+    recognition.onend = () => setIsListening(false);
+    recognitionRef.current = recognition;
+    recognition.start();
+    setIsListening(true);
+  }, []);
+
+  const stopListening = useCallback(() => {
+    recognitionRef.current?.stop();
+    setIsListening(false);
+  }, []);
+
   const mutation = useMutation({
     mutationFn: async (question: string) => {
       await saveChatMessage(user!.id, 'user', question);
-
       const context: BudgetContext = {
         period: { month, year },
         totals: {
@@ -173,32 +257,242 @@ export function AIChat() {
         },
         month_transactions_count: monthTxns.length,
       };
-
       const answer = await askAI(question, context);
       await saveChatMessage(user!.id, 'assistant', answer);
       return answer;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ai-chats'] });
-      setInput('');
-    },
+    onSuccess: () => { invalidateChat(); setInput(''); },
   });
 
-  const send = (text: string) => {
-    if (!text.trim() || mutation.isPending || isFinancialDataLoading) return;
-    mutation.mutate(text.trim());
+  // Local regex fallback parsers — used when Gemini extracts intent but no structured data
+  const parseGoalFromText = (text: string): { name?: string; target_amount?: number; deadline?: string } => {
+    const lower = text.toLowerCase();
+    const amountMatch = lower.match(/(\d[\d\s]*(?:млн|миллион\w*)?)\s*(?:тенге|тг|₸)?/);
+    let target_amount: number | undefined;
+    if (amountMatch) {
+      const raw = amountMatch[1].replace(/\s/g, '');
+      const num = parseFloat(raw);
+      target_amount = /млн|миллион/i.test(amountMatch[0]) ? num * 1_000_000 : num;
+    }
+
+    const MONTHS: Record<string, string> = {
+      январ: '01', феврал: '02', март: '03', апрел: '04', май: '05', мая: '05',
+      июн: '06', июл: '07', август: '08', сентябр: '09', октябр: '10',
+      ноябр: '11', декабр: '12',
+    };
+    let deadline: string | undefined;
+    const deadlineMatch = lower.match(/до\s+(\d{1,2})\s+(январ|феврал|март|апрел|май|мая|июн|июл|август|сентябр|октябр|ноябр|декабр)\w*/);
+    if (deadlineMatch) {
+      const day = String(deadlineMatch[1]).padStart(2, '0');
+      const mon = MONTHS[deadlineMatch[2]] ?? '01';
+      deadline = `${new Date().getFullYear()}-${mon}-${day}`;
+    }
+
+    const goalKeywords = ['жильё', 'жилье', 'машин', 'авто', 'отпуск', 'путешеств', 'ноутбук', 'телефон', 'образован', 'свадьб', 'ремонт', 'пенси', 'бизнес'];
+    const found = goalKeywords.find(k => lower.includes(k));
+    const name = found
+      ? found.charAt(0).toUpperCase() + found.slice(1).replace(/[аяеёиоуыэюь]+$/, '')
+      : undefined;
+
+    return { name, target_amount, deadline };
   };
 
+  const executeCommand = async (_text: string, intent: ChatCommandIntent): Promise<void> => {
+    if (intent.intent === 'show_commands_help') {
+      await saveMsg('assistant', COMMANDS_HELP);
+      return;
+    }
+
+    if (intent.intent === 'open_management') {
+      await saveMsg('assistant', 'Открываю раздел управления транзакциями.');
+      navigate('/transactions');
+      return;
+    }
+
+    if (intent.intent === 'delete_last_transaction') {
+      const scope = intent.delete_transaction?.scope ?? 'last';
+      const candidate = scope === 'last_expense'
+        ? allTxns.find(t => t.type === 'expense')
+        : scope === 'last_income'
+          ? allTxns.find(t => t.type === 'income')
+          : allTxns[0];
+
+      if (!candidate) {
+        await saveMsg('assistant', 'Не нашёл транзакций для удаления.');
+        return;
+      }
+
+      await deleteTransaction(candidate.id);
+      invalidateAll();
+
+      const label = [
+        candidate.type === 'income' ? 'доход' : 'расход',
+        formatCurrency(candidate.amount),
+        candidate.description ? `"${candidate.description}"` : null,
+        candidate.date,
+      ].filter(Boolean).join(' · ');
+      await saveMsg('assistant', `Готово, удалена транзакция: ${label}.`);
+      return;
+    }
+
+    if (intent.intent === 'update_budget_limit') {
+      const b = intent.budget ?? {};
+      const limitAmount = Number(b.limit_amount ?? NaN);
+
+      if (!Number.isFinite(limitAmount) || limitAmount < 0) {
+        await saveMsg('assistant', intent.reply ?? 'Укажите сумму лимита. Пример: "поставь лимит 50000 на еду".');
+        return;
+      }
+
+      const catId = resolveCategoryId('expense', b.category_id, b.category_name);
+      const catName = catId
+        ? categories.find(c => c.id === catId)?.name_ru ?? b.category_name ?? 'Категория'
+        : b.category_name ?? 'Категория';
+
+      if (!catId) {
+        await saveMsg('assistant', intent.reply ?? 'Не удалось определить категорию. Назовите её точнее.');
+        return;
+      }
+
+      const period = (b.period && ['month', 'week', 'year'].includes(b.period)) ? b.period as 'month' | 'week' | 'year' : 'month';
+      await upsertBudget({
+        user_id: user!.id,
+        category_id: catId,
+        limit_amount: limitAmount,
+        period,
+        year: b.year ?? year,
+        month: b.month ?? month,
+        notify_at_pct: 80,
+      });
+      queryClient.invalidateQueries({ queryKey: ['budgets'] });
+      queryClient.invalidateQueries({ queryKey: ['spent'] });
+      await saveMsg('assistant', `Готово, лимит для "${catName}" установлен: ${formatCurrency(limitAmount)}.`);
+      return;
+    }
+
+    if (intent.intent === 'create_goal') {
+      const g = intent.goal ?? {};
+      let gName = g.name;
+      let gTargetAmount = Number(g.target_amount ?? NaN);
+      let gDeadline = g.deadline;
+
+      // Fallback: if Gemini returned intent but no data, parse locally
+      if (!gName || !Number.isFinite(gTargetAmount) || gTargetAmount <= 0) {
+        const local = parseGoalFromText(_text);
+        gName = gName || local.name;
+        if (!Number.isFinite(gTargetAmount) || gTargetAmount <= 0) gTargetAmount = local.target_amount ?? NaN;
+        gDeadline = gDeadline || local.deadline;
+      }
+
+      const targetAmount = gTargetAmount;
+      if (!gName || !Number.isFinite(targetAmount) || targetAmount <= 0) {
+        await saveMsg('assistant', intent.reply ?? 'Укажите название и сумму цели. Пример: "создай цель Машина на 3 миллиона".');
+        return;
+      }
+
+      const resolvedDeadline = gDeadline && /^\d{4}-\d{2}-\d{2}$/.test(gDeadline) ? gDeadline : null;
+      await createGoal({
+        user_id: user!.id,
+        name: gName,
+        target_amount: targetAmount,
+        current_amount: Number(g.current_amount ?? 0) || 0,
+        deadline: resolvedDeadline,
+        icon: g.icon ?? '🎯',
+        color: g.color ?? '#1D9E75',
+      });
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      await saveMsg('assistant', `Готово, цель "${gName}" создана на ${formatCurrency(targetAmount)}${resolvedDeadline ? ` · дедлайн ${resolvedDeadline}` : ''}.`);
+      return;
+    }
+
+    if (intent.intent === 'create_transaction') {
+      const tx = intent.transaction ?? {};
+      const type = tx.type ?? 'expense';
+      const amount = Number(tx.amount ?? NaN);
+
+      if (!Number.isFinite(amount) || amount <= 0) {
+        await saveMsg('assistant', intent.reply ?? 'Укажите сумму. Пример: "добавь расход 4500 такси".');
+        return;
+      }
+
+      const date = typeof tx.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(tx.date)
+        ? tx.date : new Date().toISOString().split('T')[0];
+      const account: 'main' | 'kaspi' | 'cash' = tx.account && ['main', 'kaspi', 'cash'].includes(tx.account)
+        ? tx.account : 'main';
+      const categoryId = resolveCategoryId(type, tx.category_id, tx.category_name);
+      const categoryName = categoryId ? categories.find(c => c.id === categoryId)?.name_ru ?? null : null;
+
+      if (type !== 'transfer' && !categoryId) {
+        await saveMsg('assistant', 'Не смог определить категорию. Назовите её прямо в команде.');
+        return;
+      }
+
+      await createTransaction({
+        user_id: user!.id,
+        amount,
+        type,
+        category_id: type === 'transfer' ? null : categoryId,
+        description: tx.description?.trim() || null,
+        date,
+        account,
+        tags: null,
+        ai_categorized: true,
+      });
+      invalidateAll();
+
+      const typeLabel = type === 'income' ? 'доход' : type === 'transfer' ? 'перевод' : 'расход';
+      const details = [
+        `${typeLabel} ${formatCurrency(amount)}`,
+        categoryName ? `категория: ${categoryName}` : null,
+        tx.description ? `комментарий: "${tx.description}"` : null,
+      ].filter(Boolean).join(', ');
+      await saveMsg('assistant', `Готово, добавил ${details}.`);
+    }
+  };
+
+  const send = async (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed || mutation.isPending || isBusy) return;
+
+    setInput('');
+
+    const intent = await (async () => {
+      try {
+        return await detectChatIntent(trimmed, {
+          categories: categories.map(c => ({ id: c.id, name_ru: c.name_ru, type: c.type })),
+        });
+      } catch {
+        return { intent: 'none' as const };
+      }
+    })();
+
+    if (intent.intent !== 'none') {
+      await saveMsg('user', trimmed);
+      setIsExecuting(true);
+      try {
+        await executeCommand(trimmed, intent);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : 'Произошла ошибка при выполнении команды.';
+        await saveMsg('assistant', `Ошибка: ${msg}`);
+      } finally {
+        setIsExecuting(false);
+      }
+    } else {
+      mutation.mutate(trimmed);
+    }
+  };
+
+  const isPending = mutation.isPending || isExecuting;
+
   return (
-    <div className="flex flex-col h-[calc(100vh-10rem)] max-w-2xl mx-auto">
+    <div className="mx-auto flex h-[calc(100dvh-8.5rem)] min-h-[26rem] w-full max-w-2xl flex-col sm:h-[calc(100dvh-10rem)]">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-4 px-1">
+      <div className="mb-3 flex items-center gap-3 px-1 sm:mb-4">
         <div className="w-10 h-10 rounded-2xl bg-[#DA7B93]/15 flex items-center justify-center">
           <Bot size={20} className="text-[#DA7B93]" />
         </div>
         <div>
           <h2 className="font-semibold text-white">BonssAi советник</h2>
-          {/* <p className="text-xs text-white/55">Powered by Gemini</p> */}
         </div>
       </div>
 
@@ -220,7 +514,7 @@ export function AIChat() {
                 <button
                   key={q}
                   onClick={() => send(q)}
-                  disabled={isFinancialDataLoading || mutation.isPending}
+                  disabled={isBusy || isPending}
                   className="text-left text-sm px-4 py-2.5 rounded-xl border border-white/15 hover:border-[#DA7B93]/50 hover:bg-[#DA7B93]/12 transition-colors text-white/75 disabled:opacity-50 disabled:hover:border-white/15 disabled:hover:bg-transparent"
                 >
                   {q}
@@ -245,7 +539,7 @@ export function AIChat() {
                   }
                 </div>
                 <div className={cn(
-                  'max-w-[80%] px-4 py-3 rounded-2xl text-sm leading-relaxed',
+                  'max-w-[88%] rounded-2xl px-3.5 py-3 text-sm leading-relaxed sm:max-w-[80%] sm:px-4 whitespace-pre-line',
                   msg.role === 'user'
                     ? 'bg-[#2F4454] text-white rounded-tr-sm'
                     : 'bg-white/8 border border-white/12 text-white/85 rounded-tl-sm backdrop-blur-xl'
@@ -254,18 +548,25 @@ export function AIChat() {
                 </div>
               </div>
             ))}
-            {mutation.isPending && (
+            {isPending && (
               <div className="flex gap-3">
                 <div className="w-8 h-8 rounded-xl bg-[#DA7B93]/15 flex items-center justify-center">
                   <Bot size={14} className="text-[#DA7B93]" />
                 </div>
                 <div className="bg-white/8 border border-white/12 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-xl">
-                  <div className="flex gap-1">
-                    {[0, 1, 2].map(i => (
-                      <div key={i} className="w-1.5 h-1.5 bg-[#DA7B93] rounded-full animate-bounce"
-                        style={{ animationDelay: `${i * 0.15}s` }} />
-                    ))}
-                  </div>
+                  {isExecuting ? (
+                    <div className="flex items-center gap-2 text-sm text-white/60">
+                      <Loader2 size={14} className="animate-spin text-[#5DCAA5]" />
+                      Выполняю...
+                    </div>
+                  ) : (
+                    <div className="flex gap-1">
+                      {[0, 1, 2].map(i => (
+                        <div key={i} className="w-1.5 h-1.5 bg-[#DA7B93] rounded-full animate-bounce"
+                          style={{ animationDelay: `${i * 0.15}s` }} />
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -276,22 +577,35 @@ export function AIChat() {
 
       {/* Input */}
       <div className="pt-3 border-t border-white/10">
-        {isFinancialDataLoading && (
-          <p className="mb-2 text-xs text-white/55">Загружаю все ваши транзакции для точного анализа...</p>
+        {isDataLoading && (
+          <p className="mb-2 text-xs text-white/55">Загружаю данные для точного анализа...</p>
         )}
         <div className="flex gap-2">
           <input
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={e => e.key === 'Enter' && !e.shiftKey && send(input)}
-            placeholder="Задайте вопрос о ваших финансах..."
-            disabled={mutation.isPending || isFinancialDataLoading}
+            placeholder="Спросите про финансы или: добавь расход 4500 такси"
+            disabled={isPending || isDataLoading}
             className="flex-1 rounded-xl border border-white/15 bg-white/8 px-4 py-3 text-sm text-white placeholder:text-white/35 focus:outline-none focus:ring-2 focus:ring-[#5DCAA5] disabled:opacity-60"
           />
           <button
+            type="button"
+            onClick={isListening ? stopListening : startListening}
+            disabled={isPending || isDataLoading}
+            className={cn(
+              'flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition-colors disabled:opacity-50 sm:h-12 sm:w-12',
+              isListening
+                ? 'bg-[#E24B4A] text-white animate-pulse'
+                : 'border border-white/20 text-white/60 hover:bg-white/10'
+            )}
+          >
+            {isListening ? <MicOff size={18} /> : <Mic size={18} />}
+          </button>
+          <button
             onClick={() => send(input)}
-            disabled={!input.trim() || mutation.isPending || isFinancialDataLoading}
-            className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#5DCAA5] text-[#0d1b26] transition-colors hover:bg-[#71d9b6] disabled:opacity-50"
+            disabled={!input.trim() || isPending || isDataLoading}
+            className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#5DCAA5] text-[#0d1b26] transition-colors hover:bg-[#71d9b6] disabled:opacity-50 sm:h-12 sm:w-12"
           >
             <Send size={18} />
           </button>

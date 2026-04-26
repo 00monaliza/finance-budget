@@ -35,7 +35,8 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
   const [activeChip, setActiveChip] = useState<string | null>(null);
   const [status, setStatus] = useState<Status>({ kind: 'idle' });
   const [isListening, setIsListening] = useState(false);
-  const recognitionRef = useRef<SpeechRecognition | null>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const recognitionRef = useRef<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const isExecutingRef = useRef(false);
@@ -149,13 +150,15 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
   const startListening = useCallback(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const w = window as any;
-    const SR: new () => SpeechRecognition = w.SpeechRecognition ?? w.webkitSpeechRecognition;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const SR: new () => any = w.SpeechRecognition ?? w.webkitSpeechRecognition;
     if (!SR) { alert('Голосовой ввод доступен только в Chrome / Edge.'); return; }
     const r = new SR();
     r.lang = 'ru-RU';
     r.interimResults = false;
     r.maxAlternatives = 1;
-    r.onresult = (e: SpeechRecognitionEvent) => setInput(e.results[0][0].transcript);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    r.onresult = (e: any) => setInput(e.results[0][0].transcript);
     r.onerror = () => setIsListening(false);
     r.onend = () => setIsListening(false);
     recognitionRef.current = r;
