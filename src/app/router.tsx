@@ -1,8 +1,10 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route, Navigate, Outlet } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
+import { useProfile } from '@/entities/profile';
 import { AppLayout } from './layouts/AppLayout';
 
+const OnboardingPage      = lazy(() => import('@/pages/onboarding/OnboardingPage'));
 const LoginPage           = lazy(() => import('@/pages/auth/LoginPage'));
 const RegisterPage        = lazy(() => import('@/pages/auth/RegisterPage'));
 const ForgotPasswordPage  = lazy(() => import('@/pages/auth/ForgotPasswordPage'));
@@ -28,6 +30,15 @@ function ProtectedRoute() {
   const { user, isLoading } = useAuthStore();
   if (isLoading) return <LoadingScreen />;
   if (!user) return <Navigate to="/auth/login" replace />;
+  return <Outlet />;
+}
+
+function OnboardedRoute() {
+  const { user, isLoading } = useAuthStore();
+  const { data: profile, isLoading: profileLoading } = useProfile(user?.id);
+  if (isLoading || profileLoading) return <LoadingScreen />;
+  if (!user) return <Navigate to="/auth/login" replace />;
+  if (profile && !profile.onboarding_completed) return <Navigate to="/onboarding" replace />;
   return <Outlet />;
 }
 
@@ -64,8 +75,13 @@ export function AppRouter() {
 
         <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
 
-        {/* Protected routes with layout */}
+        {/* Onboarding (protected, no layout) */}
         <Route element={<ProtectedRoute />}>
+          <Route path="/onboarding" element={<OnboardingPage />} />
+        </Route>
+
+        {/* Protected routes with layout */}
+        <Route element={<OnboardedRoute />}>
           <Route element={<AppLayout />}>
             <Route path="/dashboard"        element={<DashboardPage />} />
             <Route path="/transactions"     element={<TransactionsPage />} />
