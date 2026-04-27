@@ -12,6 +12,7 @@ const ResetPasswordPage   = lazy(() => import('@/pages/auth/ResetPasswordPage'))
 const TransactionsPage    = lazy(() => import('@/pages/transactions/TransactionsPage'));
 const AddTransactionPage  = lazy(() => import('@/pages/transactions/AddTransactionPage'));
 const ImportCSVPage       = lazy(() => import('@/pages/settings/ImportCSVPageRoute'));
+const SettingsPage        = lazy(() => import('@/pages/settings/SettingsPage'));
 const BudgetsPage         = lazy(() => import('@/pages/budgets/BudgetsPage'));
 const DashboardPage       = lazy(() => import('@/pages/dashboard/DashboardPage'));
 const AnalyticsPage       = lazy(() => import('@/pages/analytics/AnalyticsPage'));
@@ -96,7 +97,7 @@ export function AppRouter() {
             <Route path="/credits"           element={<CreditsPage />} />
             <Route path="/investments"       element={<InvestmentsPage />} />
             <Route path="/ai"               element={<AIAdvisorPage />} />
-            <Route path="/settings"         element={<PlaceholderPage title="Настройки" />} />
+            <Route path="/settings"         element={<SettingsPage />} />
             <Route path="/settings/import"  element={<ImportCSVPage />} />
           </Route>
         </Route>
