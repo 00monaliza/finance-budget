@@ -28,6 +28,44 @@ interface GeminiCallOptions {
   maxOutputTokens: number;
   temperature?: number;
   responseMimeType?: 'text/plain' | 'application/json';
+  systemInstruction?: string;
+  retries?: number;
+  timeoutMs?: number;
+}
+
+const TRANSIENT_STATUSES = new Set([429, 503]);
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, ms);
+  });
+}
+
+function isGeminiErrorText(text: string): boolean {
+  return [
+    'лимит Gemini',
+    'Ключ Gemini',
+    'Сетевая ошибка',
+    'Не задан VITE_GEMINI_API_KEY',
+    'Превышено время ожидания',
+    'AI вернул пустой ответ',
+    'временно недоступен',
+    'временно перегружен',
+  ].some((marker) => text.includes(marker));
+}
+
+function extractGeminiText(data: unknown): string {
+  const candidate = (data as { candidates?: Array<{ content?: { parts?: Array<{ text?: string }> } }> })
+    .candidates?.[0];
+
+  if (!candidate?.content?.parts?.length) {
+    return 'AI вернул пустой ответ. Попробуйте уточнить запрос.';
+  }
+
+  return candidate.content.parts
+    .map((part) => part.text ?? '')
+    .join('')
+    .trim() || 'AI вернул пустой ответ. Попробуйте уточнить запрос.';
 }
 
 async function callGemini(prompt: string, options: GeminiCallOptions | number): Promise<string> {
@@ -38,38 +76,65 @@ async function callGemini(prompt: string, options: GeminiCallOptions | number): 
   const opts: GeminiCallOptions = typeof options === 'number'
     ? { maxOutputTokens: options }
     : options;
+  const retries = Math.max(0, opts.retries ?? 1);
+  const timeoutMs = Math.max(2_000, opts.timeoutMs ?? 15_000);
 
   try {
     let lastStatus = 0;
     const uniqueModels = Array.from(new Set(MODEL_CANDIDATES));
 
     for (const model of uniqueModels) {
-      const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${env.GEMINI_API_KEY}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              role: 'user',
-              parts: [{ text: prompt }],
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: opts.maxOutputTokens,
-            ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
-            ...(opts.responseMimeType ? { responseMimeType: opts.responseMimeType } : {}),
-          },
-        }),
-      });
+      for (let attempt = 0; attempt <= retries; attempt += 1) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-      if (response.ok) {
-        const data = await response.json();
-        return data.candidates?.[0]?.content?.parts?.[0]?.text ?? 'AI вернул пустой ответ. Попробуйте уточнить запрос.';
-      }
+        try {
+          const response = await fetch(`${GEMINI_API_BASE}/${model}:generateContent?key=${env.GEMINI_API_KEY}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            signal: controller.signal,
+            body: JSON.stringify({
+              ...(opts.systemInstruction
+                ? { systemInstruction: { parts: [{ text: opts.systemInstruction }] } }
+                : {}),
+              contents: [
+                {
+                  role: 'user',
+                  parts: [{ text: prompt }],
+                },
+              ],
+              generationConfig: {
+                maxOutputTokens: opts.maxOutputTokens,
+                ...(opts.temperature !== undefined ? { temperature: opts.temperature } : {}),
+                ...(opts.responseMimeType ? { responseMimeType: opts.responseMimeType } : {}),
+              },
+            }),
+          });
 
-      lastStatus = response.status;
-      if (response.status !== 429 && response.status !== 503) {
-        return mapGeminiError(response.status);
+          if (response.ok) {
+            const data = await response.json();
+            return extractGeminiText(data);
+          }
+
+          lastStatus = response.status;
+          if (!TRANSIENT_STATUSES.has(response.status)) {
+            return mapGeminiError(response.status);
+          }
+
+          const isLastAttempt = attempt === retries;
+          if (!isLastAttempt) {
+            await delay(250 * (attempt + 1));
+          }
+        } catch (error) {
+          if (!(error instanceof DOMException && error.name === 'AbortError')) {
+            throw error;
+          }
+          if (attempt === retries) {
+            return 'Превышено время ожидания ответа от AI. Попробуйте сократить запрос.';
+          }
+        } finally {
+          clearTimeout(timeout);
+        }
       }
     }
 
@@ -88,13 +153,26 @@ export const FINANCE_SYSTEM_PROMPT = `
 Не давай общих советов — только на основе реальных цифр пользователя.
 `.trim();
 
+const FINANCE_ANSWER_FORMAT_PROMPT = `
+Формат ответа:
+1) Короткий вывод по ситуации (1 предложение).
+2) Два конкретных шага с ожидаемым эффектом в ₸.
+3) Один риск/предупреждение, если это актуально.
+Если данных недостаточно — задай 1 уточняющий вопрос вместо домыслов.
+`.trim();
+
 export async function askAI(
   question: string,
   budgetContext: BudgetContext
 ): Promise<string> {
   return callGemini(
-    `${FINANCE_SYSTEM_PROMPT}\n\nДанные бюджета:\n${JSON.stringify(budgetContext, null, 2)}\n\nВопрос: ${question}`,
-    1000,
+    `Данные бюджета:\n${JSON.stringify(budgetContext, null, 2)}\n\nВопрос пользователя: ${question}`,
+    {
+      maxOutputTokens: 1000,
+      temperature: 0.3,
+      systemInstruction: `${FINANCE_SYSTEM_PROMPT}\n\n${FINANCE_ANSWER_FORMAT_PROMPT}`,
+      retries: 1,
+    },
   );
 }
 
@@ -102,16 +180,37 @@ export async function autoCategorize(
   description: string,
   categories: Array<{ id: string; name_ru: string }>
 ): Promise<string> {
+  const categoryList = categories.map((c) => ({ id: c.id, name: c.name_ru }));
   const result = await callGemini(
-    `Верни ТОЛЬКО id категории из списка. Без объяснений.\nКатегории: ${JSON.stringify(categories.map(c => ({ id: c.id, name: c.name_ru })))}\nТранзакция: "${description}"\nid категории:`,
-    50,
+    [
+      'Верни только JSON без markdown.',
+      'Строго формат: {"category_id":"<id или empty>"}',
+      'Если не уверен — верни {"category_id":"empty"}.',
+      `Категории: ${JSON.stringify(categoryList)}`,
+      `Транзакция: "${description}"`,
+    ].join('\n'),
+    {
+      maxOutputTokens: 80,
+      temperature: 0,
+      responseMimeType: 'application/json',
+      retries: 1,
+    },
   );
 
-  if (result.includes('лимит') || result.includes('Ключ Gemini') || result.includes('Сетевая ошибка')) {
+  if (isGeminiErrorText(result)) {
     return '';
   }
 
-  return result.trim();
+  try {
+    const parsed = JSON.parse(result) as { category_id?: string };
+    if (!parsed.category_id || parsed.category_id === 'empty') {
+      return '';
+    }
+    return categories.some((c) => c.id === parsed.category_id) ? parsed.category_id : '';
+  } catch {
+    const fallbackId = result.trim();
+    return categories.some((c) => c.id === fallbackId) ? fallbackId : '';
+  }
 }
 
 type CommandTransaction = {
@@ -162,6 +261,15 @@ export type ChatCommandIntent = {
   goal?: CommandGoal;
 };
 
+function toNumber(value: unknown): number | undefined {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value === 'string') {
+    const parsed = Number(value.replace(/\s/g, ''));
+    return Number.isFinite(parsed) ? parsed : undefined;
+  }
+  return undefined;
+}
+
 function safeParseIntent(raw: string): ChatCommandIntent {
   const cleaned = raw.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
   const start = cleaned.indexOf('{');
@@ -186,13 +294,35 @@ function safeParseIntent(raw: string): ChatCommandIntent {
       return { intent: 'none' };
     }
 
+    const transaction = parsed.transaction && typeof parsed.transaction === 'object'
+      ? {
+        ...parsed.transaction,
+        amount: toNumber((parsed.transaction as { amount?: unknown }).amount),
+      }
+      : undefined;
+
+    const budget = parsed.budget && typeof parsed.budget === 'object'
+      ? {
+        ...parsed.budget,
+        limit_amount: toNumber((parsed.budget as { limit_amount?: unknown }).limit_amount),
+      }
+      : undefined;
+
+    const goal = parsed.goal && typeof parsed.goal === 'object'
+      ? {
+        ...parsed.goal,
+        target_amount: toNumber((parsed.goal as { target_amount?: unknown }).target_amount),
+        current_amount: toNumber((parsed.goal as { current_amount?: unknown }).current_amount),
+      }
+      : undefined;
+
     return {
       intent: parsed.intent,
       reply: typeof parsed.reply === 'string' ? parsed.reply : undefined,
-      transaction: parsed.transaction,
+      transaction,
       delete_transaction: parsed.delete_transaction,
-      budget: parsed.budget,
-      goal: parsed.goal,
+      budget,
+      goal,
     };
   } catch {
     return { intent: 'none' };
@@ -267,14 +397,10 @@ export async function detectChatIntent(
     maxOutputTokens: 400,
     temperature: 0,
     responseMimeType: 'application/json',
+    retries: 1,
   });
 
-  if (
-    response.includes('лимит Gemini')
-    || response.includes('Ключ Gemini')
-    || response.includes('Сетевая ошибка')
-    || response.includes('Не задан VITE_GEMINI_API_KEY')
-  ) {
+  if (isGeminiErrorText(response)) {
     return { intent: 'none' };
   }
 
