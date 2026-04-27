@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react';
-import { Bell, Plus, X, AlertTriangle, Menu, Sparkles } from 'lucide-react';
+import { Bell, Plus, X, AlertTriangle, Sparkles } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
 import { useBudgetAlerts } from '@/features/ai-analysis';
@@ -8,20 +8,19 @@ import { cn } from '@/shared/lib/cn';
 import { QuickAIPanel } from '@/widgets/QuickAIPanel';
 
 const PAGE_TITLES: Record<string, string> = {
-  '/dashboard':    'Главная',
-  '/transactions': 'Транзакции',
-  '/budgets':      'Бюджеты',
-  '/analytics':    'Аналитика',
-  '/goals':        'Цели накоплений',
-  '/ai':           'AI Советник',
-  '/settings':     'Настройки',
+  '/dashboard':        'Главная',
+  '/transactions':     'Операции',
+  '/analytics':        'Аналитика',
+  '/goals':            'Цели',
+  '/profile':          'Профиль',
+  '/accounts':         'Счета',
+  '/credits':          'Кредиты',
+  '/investments':      'Инвестиции',
+  '/ai':               'AI Советник',
+  '/settings/import':  'Импорт CSV',
 };
 
-interface HeaderProps {
-  onMenuClick?: () => void;
-}
-
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header() {
   const { pathname } = useLocation();
   const { user } = useAuthStore();
   const alerts = useBudgetAlerts();
@@ -29,28 +28,19 @@ export function Header({ onMenuClick }: HeaderProps) {
   const [showAIPanel, setShowAIPanel] = useState(false);
   const aiButtonRef = useRef<HTMLButtonElement>(null);
 
-  const title = PAGE_TITLES[pathname] ?? 'FinanceAI';
+  const title = PAGE_TITLES[pathname] ?? 'Bonssai';
   const name = user?.user_metadata?.full_name ?? user?.email ?? '';
   const initials = name
     .split(' ')
+    .filter(Boolean)
     .map((w: string) => w[0])
     .join('')
     .slice(0, 2)
     .toUpperCase();
 
   return (
-    <header className="relative z-30 flex h-16 shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-[rgba(13,27,38,0.85)] px-3 text-white backdrop-blur-xl sm:px-5 lg:px-6">
-      <div className="flex min-w-0 items-center gap-2">
-        <button
-          type="button"
-          onClick={() => onMenuClick?.()}
-          className="rounded-xl p-2 transition-colors hover:bg-white/10 lg:hidden"
-          aria-label="Открыть меню"
-        >
-          <Menu size={20} className="text-white/80" />
-        </button>
-        <h1 className="truncate text-base font-semibold text-white sm:text-lg">{title}</h1>
-      </div>
+    <header className="relative z-30 flex h-14 shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-[rgba(13,27,38,0.85)] px-3 text-white backdrop-blur-xl sm:px-5">
+      <h1 className="truncate text-base font-semibold text-white">{title}</h1>
 
       <div className="flex items-center gap-1.5 sm:gap-2.5">
         <div className="relative">
@@ -74,7 +64,6 @@ export function Header({ onMenuClick }: HeaderProps) {
           <span className="hidden sm:inline">Добавить</span>
         </Link>
 
-        {/* Notifications bell */}
         <div className="relative">
           <button
             onClick={() => setShowAlerts(v => !v)}
@@ -99,15 +88,13 @@ export function Header({ onMenuClick }: HeaderProps) {
                   </button>
                 </div>
                 {alerts.length === 0 ? (
-                  <div className="px-4 py-6 text-center text-sm text-white/55">
-                    Текущих уведомлений нет
-                  </div>
+                  <div className="px-4 py-6 text-center text-sm text-white/55">Нет уведомлений</div>
                 ) : (
                   <div className="max-h-72 divide-y divide-white/8 overflow-y-auto">
                     {alerts.map(alert => (
                       <Link
                         key={alert.budgetId}
-                        to="/budgets"
+                        to="/transactions"
                         onClick={() => setShowAlerts(false)}
                         className="flex items-start gap-3 px-4 py-3 transition-colors hover:bg-white/8"
                       >
@@ -116,18 +103,13 @@ export function Header({ onMenuClick }: HeaderProps) {
                           className={cn('mt-0.5 shrink-0', alert.isOver ? 'text-[#E24B4A]' : 'text-[#EF9F27]')}
                         />
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white/90">
-                            {alert.icon} {alert.categoryName}
-                          </p>
+                          <p className="text-sm font-medium text-white/90">{alert.icon} {alert.categoryName}</p>
                           <p className="mt-0.5 text-xs text-white/65">
                             {alert.isOver
                               ? `Перерасход на ${formatCurrency(alert.spent - alert.limit)}`
-                              : `${Math.round(alert.pct)}% бюджета использовано`
-                            }
+                              : `${Math.round(alert.pct)}% бюджета использовано`}
                           </p>
-                          <p className="text-xs text-white/45">
-                            {formatCurrency(alert.spent)} / {formatCurrency(alert.limit)}
-                          </p>
+                          <p className="text-xs text-white/45">{formatCurrency(alert.spent)} / {formatCurrency(alert.limit)}</p>
                         </div>
                       </Link>
                     ))}
