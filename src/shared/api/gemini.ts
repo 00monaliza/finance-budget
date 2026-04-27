@@ -394,7 +394,7 @@ export async function detectChatIntent(
   ].filter(Boolean).join('\n');
 
   const response = await callGemini(prompt, {
-    maxOutputTokens: 400,
+    maxOutputTokens: 900,
     temperature: 0,
     responseMimeType: 'application/json',
     retries: 1,

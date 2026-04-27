@@ -105,6 +105,32 @@ export function useCommandExecutor({
       if (!isMountedRef.current) return;
 
       if (intent.intent === 'none') {
+        const localTx = parseTransactionFromText(trimmed);
+        if (Number.isFinite(localTx.amount) && (localTx.amount ?? 0) > 0) {
+          intent = {
+            intent: 'create_transaction',
+            transaction: {
+              amount: localTx.amount,
+              type: localTx.type,
+              account: localTx.account,
+            },
+          };
+        } else {
+          const localGoal = parseGoalFromText(trimmed);
+          if (localGoal.name && Number.isFinite(localGoal.target_amount) && (localGoal.target_amount ?? 0) > 0) {
+            intent = {
+              intent: 'create_goal',
+              goal: {
+                name: localGoal.name,
+                target_amount: localGoal.target_amount,
+                deadline: localGoal.deadline,
+              },
+            };
+          }
+        }
+      }
+
+      if (intent.intent === 'none') {
         setStatus({ kind: 'error', msg: 'Не распознана команда. Попробуйте: "добавь расход 4500 такси".' });
         return;
       }
@@ -233,7 +259,6 @@ export function useCommandExecutor({
     };
 
     run().finally(() => { isExecutingRef.current = false; });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, allTxns, user, navigate, queryClient, onClose, invalidateAll, addToHistory]);
 
   return { status, execute, history, clearHistory };

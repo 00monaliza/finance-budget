@@ -27,6 +27,7 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
 
   const { allTxns, categories, invalidateAll } = useQuickAIData({ userId: user?.id, isOpen });
   const voice = useVoiceInput();
+  const { transcript, interimText, isListening, start, stop } = voice;
   const { status, execute, history, clearHistory } = useCommandExecutor({
     categories,
     allTxns,
@@ -36,17 +37,18 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
 
   // Sync confirmed voice transcript → input
   useEffect(() => {
-    if (voice.transcript) setInput(voice.transcript);
-  }, [voice.transcript]);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (transcript) setInput(transcript);
+  }, [transcript]);
 
   useEffect(() => {
-    const trimmed = voice.transcript.trim();
-    if (!trimmed || voice.isListening || status.kind === 'executing') return;
+    const trimmed = transcript.trim();
+    if (!trimmed || isListening || status.kind === 'executing') return;
     if (lastAutoSubmittedVoiceRef.current === trimmed) return;
 
     lastAutoSubmittedVoiceRef.current = trimmed;
     execute(trimmed);
-  }, [voice.transcript, voice.isListening, status.kind, execute]);
+  }, [transcript, isListening, status.kind, execute]);
 
   // Close on outside click
   useEffect(() => {
@@ -71,12 +73,13 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
 
   // Stop voice when panel closes
   useEffect(() => {
-    if (!isOpen) voice.stop();
-  }, [isOpen, voice.stop]);
+    if (!isOpen) stop();
+  }, [isOpen, stop]);
 
   // Reset state on open
   useEffect(() => {
     if (!isOpen) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setInput('');
     setActiveChip(null);
     lastAutoSubmittedVoiceRef.current = '';
@@ -138,12 +141,12 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
         <InputRow
           inputRef={inputRef}
           value={input}
-          interimText={voice.interimText}
-          isListening={voice.isListening}
+          interimText={interimText}
+          isListening={isListening}
           isExecuting={status.kind === 'executing'}
           onChange={setInput}
           onSubmit={() => execute(input)}
-          onMicToggle={voice.isListening ? voice.stop : voice.start}
+          onMicToggle={isListening ? stop : start}
         />
 
         <StatusBar status={status} />
