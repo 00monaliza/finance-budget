@@ -1,10 +1,9 @@
-// src/widgets/QuickAIPanel/hooks/useVoiceInput.ts
 import { useState, useRef, useCallback, useEffect } from 'react';
 
 export interface UseVoiceInputReturn {
   isListening: boolean;
-  transcript: string;    // confirmed final result — caller should sync to input
-  interimText: string;   // live interim text while speaking
+  transcript: string;    
+  interimText: string;  
   start: () => void;
   stop: () => void;
 }
@@ -48,7 +47,7 @@ export function useVoiceInput(): UseVoiceInputReturn {
         else interim += text;
       }
       if (final) {
-        setTranscript(final);
+        setTranscript(prev => (prev ? prev + ' ' : '') + final);
         setInterimText('');
       } else {
         setInterimText(interim);

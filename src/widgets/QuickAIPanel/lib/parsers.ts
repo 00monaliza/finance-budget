@@ -70,7 +70,11 @@ export function parseGoalFromText(text: string): {
     /до\s+(\d{1,2})\s+(январ|феврал|март|апрел|май|мая|июн|июл|август|сентябр|октябр|ноябр|декабр)\w*/,
   );
   if (dm) {
-    deadline = `${new Date().getFullYear()}-${MONTHS[dm[2]] ?? '01'}-${String(dm[1]).padStart(2, '0')}`;
+    const mon = MONTHS[dm[2]] ?? '01';
+    const day = String(dm[1]).padStart(2, '0');
+    let yr = new Date().getFullYear();
+    if (new Date(`${yr}-${mon}-${day}`) < new Date()) yr += 1;
+    deadline = `${yr}-${mon}-${day}`;
   }
   const keys = ['жильё','жилье','машин','авто','отпуск','путешеств','ноутбук','телефон','образован','свадьб','ремонт','пенси','бизнес'];
   const found = keys.find(k => lower.includes(k));
