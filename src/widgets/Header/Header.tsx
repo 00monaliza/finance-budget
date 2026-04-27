@@ -18,6 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
   '/investments':      'Инвестиции',
   '/ai':               'AI Советник',
   '/settings/import':  'Импорт CSV',
+  '/transactions/new': 'Новая операция',
 };
 
 export function Header() {

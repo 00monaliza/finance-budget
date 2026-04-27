@@ -96,7 +96,14 @@ export default function ProfilePage() {
   });
 
   const email = user?.email ?? '';
-  const initials = email.split('@')[0].slice(0, 2).toUpperCase();
+  const name = user?.user_metadata?.full_name ?? email;
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .map((w: string) => w[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
 
   return (
     <div className="mx-auto max-w-lg space-y-5 pb-4 text-white">

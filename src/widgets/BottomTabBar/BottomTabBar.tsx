@@ -14,7 +14,7 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="Основная навигация"
-      className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-white/10 bg-[rgba(13,27,38,0.95)] backdrop-blur-xl"
+      className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-white/10 bg-[rgba(13,27,38,0.95)] backdrop-blur-xl lg:hidden"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       {TABS.map(({ to, icon: Icon, label }) => (
