@@ -20,8 +20,8 @@ export async function getProfile(userId: string) {
     .from('user_profiles')
     .select('*')
     .eq('id', userId)
-    .single();
-  if (error && error.code !== 'PGRST116') throw error;
+    .maybeSingle();
+  if (error) throw error;
   return data as UserProfile | null;
 }
 

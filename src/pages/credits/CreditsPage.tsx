@@ -50,8 +50,8 @@ export default function CreditsPage() {
       {/* Tabs */}
       <div className="flex gap-1 bg-[#2F4454] p-1 rounded-xl">
         {[
-          { v: 'credits' as Tab, l: '🏦 Кредиты & Рассрочки' },
-          { v: 'debts' as Tab, l: '🤝 Долги' },
+          { v: 'credits' as Tab, l: 'Кредиты & Рассрочки' },
+          { v: 'debts' as Tab, l: 'Долги' },
         ].map(({ v, l }) => (
           <button
             key={v}
@@ -108,8 +108,8 @@ export default function CreditsPage() {
           {/* Direction filter */}
           <div className="flex gap-1 bg-[#2F4454] p-1 rounded-xl w-fit">
             {[
-              { v: 'owe' as DebtFilter, l: '😬 Я должен' },
-              { v: 'owed' as DebtFilter, l: '🤝 Мне должны' },
+              { v: 'owe' as DebtFilter, l: 'Я должен' },
+              { v: 'owed' as DebtFilter, l: 'Мне должны' },
             ].map(({ v, l }) => (
               <button
                 key={v}

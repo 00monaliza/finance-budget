@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Pencil, Trash2, Plus, Minus } from 'lucide-react';
-import { cn } from '@/shared/lib/cn';
 import { formatCurrency } from '@/shared/lib/formatCurrency';
 import type { Account } from '@/entities/account';
 

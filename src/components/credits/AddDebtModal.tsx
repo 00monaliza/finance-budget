@@ -40,8 +40,8 @@ export function AddDebtModal({ onClose, onSave }: AddDebtModalProps) {
         <div className="space-y-4">
           <div className="flex gap-3">
             {[
-              { v: 'owe' as const, l: '😬 Я должен' },
-              { v: 'owed' as const, l: '🤝 Мне должны' },
+              { v: 'owe' as const, l: 'Я должен' },
+              { v: 'owed' as const, l: 'Мне должны' },
             ].map(({ v, l }) => (
               <button
                 key={v}

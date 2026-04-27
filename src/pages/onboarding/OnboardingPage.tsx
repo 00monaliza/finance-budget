@@ -185,7 +185,6 @@ function StepInput({ step, data, onChange }: StepInputProps) {
 
   if (step.type === 'select' && 'options' in step) {
     const selected = (data as Record<string, string>)[step.field];
-    const selectedOpt = step.options.find(o => o.value === selected);
     return (
       <div className="space-y-3">
         {step.options.map(opt => (

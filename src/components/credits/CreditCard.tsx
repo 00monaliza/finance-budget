@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Trash2, CreditCard } from 'lucide-react';
+import { Trash2, CreditCard as CreditCardIcon } from 'lucide-react';
 import { formatCurrency } from '@/shared/lib/formatCurrency';
 import type { Credit } from '@/entities/credit';
 import type { Account } from '@/entities/account';
@@ -37,7 +37,7 @@ export function CreditCard({ credit, accounts, onDelete, onPayment }: CreditCard
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           <div className="p-2 rounded-xl bg-[#DA7B93]/20">
-            <CreditCard size={16} className="text-[#DA7B93]" />
+            <CreditCardIcon size={16} className="text-[#DA7B93]" />
           </div>
           <div>
             <p className="font-semibold text-white">{credit.name}</p>

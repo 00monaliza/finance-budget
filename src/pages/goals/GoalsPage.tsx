@@ -77,7 +77,7 @@ export default function GoalsPage() {
         </div>
       ) : goals.length === 0 ? (
         <Card className="text-center py-16">
-          <div className="text-5xl mb-3">🎯</div>
+          {/* <div className="text-5xl mb-3">🎯</div> */}
           <p className="font-medium text-white/75">Нет целей</p>
           <p className="text-white/55 text-sm mt-1">Создайте первую цель накопления</p>
           <Button size="sm" className="mt-4" onClick={() => setModalOpen(true)}>Создать</Button>
