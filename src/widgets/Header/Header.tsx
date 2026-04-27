@@ -18,7 +18,7 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 interface HeaderProps {
-  onMenuClick: () => void;
+  onMenuClick?: () => void;
 }
 
 export function Header({ onMenuClick }: HeaderProps) {
@@ -43,7 +43,7 @@ export function Header({ onMenuClick }: HeaderProps) {
       <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"
-          onClick={onMenuClick}
+          onClick={() => onMenuClick?.()}
           className="rounded-xl p-2 transition-colors hover:bg-white/10 lg:hidden"
           aria-label="Открыть меню"
         >
