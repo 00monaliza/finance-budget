@@ -18,6 +18,7 @@ const AnalyticsPage       = lazy(() => import('@/pages/analytics/AnalyticsPage')
 const GoalsPage           = lazy(() => import('@/pages/goals/GoalsPage'));
 const AIAdvisorPage       = lazy(() => import('@/pages/ai/AIAdvisorPage'));
 const AccountsPage        = lazy(() => import('@/pages/accounts/AccountsPage'));
+const CreditsPage         = lazy(() => import('@/pages/credits/CreditsPage'));
 
 function LoadingScreen() {
   return (
@@ -91,6 +92,7 @@ export function AppRouter() {
             <Route path="/analytics"        element={<AnalyticsPage />} />
             <Route path="/goals"            element={<GoalsPage />} />
             <Route path="/accounts"          element={<AccountsPage />} />
+            <Route path="/credits"           element={<CreditsPage />} />
             <Route path="/ai"               element={<AIAdvisorPage />} />
             <Route path="/settings"         element={<PlaceholderPage title="Настройки" />} />
             <Route path="/settings/import"  element={<ImportCSVPage />} />

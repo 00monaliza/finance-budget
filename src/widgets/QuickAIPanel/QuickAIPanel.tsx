@@ -23,6 +23,7 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
   const [activeChip, setActiveChip] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const lastAutoSubmittedVoiceRef = useRef('');
 
   const { allTxns, categories, invalidateAll } = useQuickAIData({ userId: user?.id, isOpen });
   const voice = useVoiceInput();
@@ -37,6 +38,15 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
   useEffect(() => {
     if (voice.transcript) setInput(voice.transcript);
   }, [voice.transcript]);
+
+  useEffect(() => {
+    const trimmed = voice.transcript.trim();
+    if (!trimmed || voice.isListening || status.kind === 'executing') return;
+    if (lastAutoSubmittedVoiceRef.current === trimmed) return;
+
+    lastAutoSubmittedVoiceRef.current = trimmed;
+    execute(trimmed);
+  }, [voice.transcript, voice.isListening, status.kind, execute]);
 
   // Close on outside click
   useEffect(() => {
@@ -69,6 +79,7 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
     if (!isOpen) return;
     setInput('');
     setActiveChip(null);
+    lastAutoSubmittedVoiceRef.current = '';
     const t = setTimeout(() => inputRef.current?.focus(), 50);
     return () => clearTimeout(t);
   }, [isOpen]);
