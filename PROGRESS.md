@@ -6,7 +6,7 @@
 - [x] 3. Accounts Section — раздел счетов
 - [x] 4. Credits & Debts Section — кредиты, рассрочки, долги
 - [x] 5. AI Personalized Dashboard — персонализированный прогноз
-- [ ] 6. Investments Section — инвестиционный раздел
+- [x] 6. Investments Section — инвестиционный раздел
 - [ ] 7. Voice Assistant Integration — голосовой ввод
 - [ ] 8. Navigation & Final Integration — навигация и интеграция
 
