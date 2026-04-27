@@ -3,7 +3,7 @@
 ## Tasks
 - [x] 1. DB Schema — Supabase миграции
 - [x] 2. Onboarding Flow — опрос после регистрации
-- [ ] 3. Accounts Section — раздел счетов
+- [x] 3. Accounts Section — раздел счетов
 - [ ] 4. Credits & Debts Section — кредиты, рассрочки, долги
 - [ ] 5. AI Personalized Dashboard — персонализированный прогноз
 - [ ] 6. Investments Section — инвестиционный раздел
