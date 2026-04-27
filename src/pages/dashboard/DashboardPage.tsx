@@ -4,8 +4,13 @@ import { TrendingUp, TrendingDown, Wallet, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
 import { fetchTransactions, fetchMonthTotals } from '@/entities/transaction';
+import { useProfile } from '@/entities/profile';
+import { useCredits } from '@/entities/credit';
 import { formatCurrency } from '@/shared/lib/formatCurrency';
 import { formatDateShort } from '@/shared/lib/formatDate';
+import { BudgetHealthCard } from '@/components/dashboard/BudgetHealthCard';
+import { AIInsightCard } from '@/components/dashboard/AIInsightCard';
+import { UpcomingPayments } from '@/components/dashboard/UpcomingPayments';
 import {
   LineChart,
   Line,
@@ -60,6 +65,8 @@ function StatCard({
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
+  const { data: profile } = useProfile(user?.id);
+  const { data: credits = [] } = useCredits();
   const now = new Date();
   const year = now.getFullYear();
   const month = now.getMonth() + 1;
@@ -89,6 +96,14 @@ export default function DashboardPage() {
 
   const balance = (totals?.income ?? 0) - (totals?.expense ?? 0);
   const monthLabel = new Intl.DateTimeFormat('ru-RU', { month: 'long' }).format(now);
+
+  const creditsMonthly = credits.reduce((s, c) => s + c.monthly_payment, 0);
+  const profileIncome = profile?.monthly_income ?? 0;
+  const freeAmount = profileIncome
+    - (totals?.expense ?? 0)
+    - creditsMonthly
+    - (profile?.housing_monthly_cost ?? 0)
+    - (profile?.car_monthly_cost ?? 0);
 
   const chartData = useMemo(
     () =>
@@ -275,6 +290,27 @@ export default function DashboardPage() {
             </div>
           </section>
         </div>
+
+        {/* AI & Health row */}
+        {profile?.onboarding_completed && (
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+            <div className="lg:col-span-2 space-y-4">
+              <BudgetHealthCard
+                income={profileIncome}
+                expenses={totals?.expense ?? 0}
+                creditsMonthly={creditsMonthly}
+              />
+              <AIInsightCard
+                income={profileIncome}
+                expenses={totals?.expense ?? 0}
+                creditsMonthly={creditsMonthly}
+                freeAmount={freeAmount}
+                goal={profile.financial_goal}
+              />
+            </div>
+            <UpcomingPayments credits={credits} />
+          </div>
+        )}
 
         <section className={`${glassClass} overflow-hidden`}>
           <div className="flex items-center justify-between border-b border-white/10 px-4 py-4 sm:px-5">
