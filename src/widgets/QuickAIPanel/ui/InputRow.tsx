@@ -3,7 +3,7 @@ import { Mic, MicOff, Send, Loader2 } from 'lucide-react';
 import { cn } from '@/shared/lib/cn';
 
 interface InputRowProps {
-  inputRef: RefObject<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement | null>;
   value: string;
   interimText: string;
   isListening: boolean;

@@ -1,5 +1,5 @@
 // src/widgets/QuickAIPanel/QuickAIPanel.tsx
-import { useState, useRef, useEffect, type RefObject } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Sparkles, X } from 'lucide-react';
 import { useAuthStore } from '@/entities/user';
 import { CHIPS } from './lib/constants';
@@ -125,7 +125,7 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
         )}
 
         <InputRow
-          inputRef={inputRef as RefObject<HTMLInputElement>}
+          inputRef={inputRef}
           value={input}
           interimText={voice.interimText}
           isListening={voice.isListening}
