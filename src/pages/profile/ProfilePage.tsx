@@ -195,7 +195,7 @@ export default function ProfilePage() {
         <SectionTitle>Инструменты</SectionTitle>
         <Card padding="sm" className="divide-y divide-white/8">
           <RowLink icon={Bot} label="AI Советник" sub="Анализ и рекомендации" to="/ai" iconBg="bg-[#DA7B93]/15" iconColor="text-[#DA7B93]" />
-          <RowLink icon={FileUp} label="Импорт выписки Kaspi" sub="Загрузить CSV файл" to="/settings/import" iconBg="bg-[#EF9F27]/15" iconColor="text-[#EF9F27]" />
+          <RowLink icon={FileUp} label="Импорт выписки с Банка" sub="Загрузить файл" to="/settings/import" iconBg="bg-[#EF9F27]/15" iconColor="text-[#EF9F27]" />
         </Card>
       </div>
 

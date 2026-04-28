@@ -342,12 +342,14 @@ export async function parseFileWithGemini(file: File): Promise<ParsedImportTrans
   }
 
   const arrayBuffer = await file.arrayBuffer();
+  // Use Uint8Array chunks to avoid call stack overflow on large files
   const bytes = new Uint8Array(arrayBuffer);
-  let binary = '';
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
+  const chunkSize = 8192;
+  const chunks: string[] = [];
+  for (let i = 0; i < bytes.byteLength; i += chunkSize) {
+    chunks.push(String.fromCharCode(...bytes.subarray(i, i + chunkSize)));
   }
-  const base64 = btoa(binary);
+  const base64 = btoa(chunks.join(''));
   const mimeType = file.type || 'application/octet-stream';
 
   const today = new Date().toISOString().split('T')[0];
@@ -359,9 +361,9 @@ export async function parseFileWithGemini(file: File): Promise<ParsedImportTrans
     `Если дата не указана, используй ${today}. Если транзакций нет — верни [].`,
   ].join('\n');
 
-  const model = env.GEMINI_MODEL || 'gemini-flash-latest';
+  const model = env.GEMINI_MODEL || 'gemini-2.0-flash';
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 45_000);
+  const timer = setTimeout(() => controller.abort(), 60_000);
 
   try {
     const response = await fetch(
@@ -378,12 +380,17 @@ export async function parseFileWithGemini(file: File): Promise<ParsedImportTrans
               { text: prompt },
             ],
           }],
-          generationConfig: { maxOutputTokens: 4000, temperature: 0, responseMimeType: 'application/json' },
+          // responseMimeType omitted — incompatible with multimodal (inline_data) requests
+          generationConfig: { maxOutputTokens: 4000, temperature: 0 },
         }),
       }
     );
 
-    if (!response.ok) throw new Error(mapGeminiError(response.status));
+    if (!response.ok) {
+      const errBody = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+      const apiMsg = errBody?.error?.message;
+      throw new Error(apiMsg ?? mapGeminiError(response.status));
+    }
 
     const data = await response.json();
     const text = extractGeminiText(data);
