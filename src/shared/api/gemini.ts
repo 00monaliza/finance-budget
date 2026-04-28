@@ -8,9 +8,15 @@ const MODEL_CANDIDATES = [
   'gemini-2.5-flash-lite',
 ];
 
-function mapGeminiError(status: number): string {
+function extractRetrySeconds(message: string): number | null {
+  const match = /retry in ([\d.]+)s/i.exec(message);
+  return match ? Math.ceil(parseFloat(match[1])) : null;
+}
+
+function mapGeminiError(status: number, retryAfterSeconds?: number | null): string {
   if (status === 429) {
-    return 'Превышен лимит Gemini API (429). Для выбранной модели квота исчерпана; попробуйте позже или смените модель/план.';
+    const wait = retryAfterSeconds != null ? ` Попробуйте через ${retryAfterSeconds} сек.` : ' Попробуйте через несколько секунд.';
+    return `Превышен лимит запросов к Gemini API (429).${wait}`;
   }
   if (status === 401 || status === 403) {
     return 'Ключ Gemini недействителен или ограничен. Проверьте VITE_GEMINI_API_KEY и настройки API key.';
@@ -44,6 +50,7 @@ function delay(ms: number): Promise<void> {
 function isGeminiErrorText(text: string): boolean {
   return [
     'лимит Gemini',
+    'лимит запросов к Gemini',
     'Ключ Gemini',
     'Сетевая ошибка',
     'Не задан VITE_GEMINI_API_KEY',
@@ -123,7 +130,10 @@ async function callGemini(prompt: string, options: GeminiCallOptions | number): 
 
           const isLastAttempt = attempt === retries;
           if (!isLastAttempt) {
-            await delay(250 * (attempt + 1));
+            const errBody = await response.json().catch(() => null) as { error?: { message?: string } } | null;
+            const retrySecs = extractRetrySeconds(errBody?.error?.message ?? '');
+            const waitMs = retrySecs ? retrySecs * 1000 : 2000 * (attempt + 1);
+            await delay(waitMs);
           }
         } catch (error) {
           if (!(error instanceof DOMException && error.name === 'AbortError')) {
@@ -174,6 +184,47 @@ export async function askAI(
       retries: 1,
     },
   );
+}
+
+export async function batchCategorize(
+  items: Array<{ description: string; type: 'income' | 'expense' }>,
+  categories: Array<{ id: string; name_ru: string }>
+): Promise<string[]> {
+  if (items.length === 0) return [];
+
+  const catList = categories.map((c) => ({ id: c.id, name: c.name_ru }));
+  const result = await callGemini(
+    [
+      'Верни только JSON массив без markdown.',
+      `Категории: ${JSON.stringify(catList)}`,
+      `Для каждой из ${items.length} транзакций ниже верни подходящий category_id или "" если не уверен.`,
+      'Ответ — СТРОГО JSON массив строк, ровно столько элементов сколько транзакций:',
+      '["id1","","id3",...]',
+      '',
+      'Транзакции:',
+      ...items.map((t, i) => `${i + 1}. [${t.type === 'income' ? 'доход' : 'расход'}] ${t.description}`),
+    ].join('\n'),
+    {
+      maxOutputTokens: Math.min(items.length * 30 + 200, 3000),
+      temperature: 0,
+      responseMimeType: 'application/json',
+      retries: 1,
+    },
+  );
+
+  if (isGeminiErrorText(result)) return items.map(() => '');
+
+  try {
+    const cleaned = result.trim().replace(/^```json\s*/i, '').replace(/```$/i, '').trim();
+    const start = cleaned.indexOf('[');
+    const end = cleaned.lastIndexOf(']');
+    if (start < 0) return items.map(() => '');
+    const parsed = JSON.parse(cleaned.slice(start, end + 1)) as unknown[];
+    const valid = new Set(categories.map((c) => c.id));
+    return parsed.map((v) => (typeof v === 'string' && valid.has(v) ? v : ''));
+  } catch {
+    return items.map(() => '');
+  }
 }
 
 export async function autoCategorize(
@@ -336,13 +387,80 @@ export type ParsedImportTransaction = {
   type: 'income' | 'expense';
 };
 
-export async function parseFileWithGemini(file: File): Promise<ParsedImportTransaction[]> {
+export type ParseFileResult = {
+  transactions: ParsedImportTransaction[];
+  isPartial: boolean;
+};
+
+function findMatchingClose(s: string, open: number, openChar: string, closeChar: string): number {
+  let depth = 0;
+  for (let i = open; i < s.length; i++) {
+    if (s[i] === openChar) depth++;
+    else if (s[i] === closeChar) {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+function extractItems(raw: string): { items: unknown[]; isPartial: boolean } {
+  const stripped = raw.replace(/```json/gi, '').replace(/```/g, '').trim();
+
+  for (let i = 0; i < stripped.length; i++) {
+    if (stripped[i] !== '[') continue;
+
+    // Try complete array (non-truncated)
+    const close = findMatchingClose(stripped, i, '[', ']');
+    if (close >= 0) {
+      try {
+        const parsed = JSON.parse(stripped.slice(i, close + 1)) as unknown;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return { items: parsed, isPartial: false };
+        }
+      } catch { /* fall through */ }
+    }
+
+    // Truncated array — scan for complete sub-items (objects or inner arrays)
+    const partial = stripped.slice(i);
+    const items: unknown[] = [];
+    let pos = 1; // skip opening '['
+    while (pos < partial.length) {
+      const ch = partial[pos];
+      if (ch === '{' || ch === '[') {
+        const closeChar = ch === '{' ? '}' : ']';
+        const end = findMatchingClose(partial, pos, ch, closeChar);
+        if (end < 0) break;
+        try { items.push(JSON.parse(partial.slice(pos, end + 1))); } catch { /* skip */ }
+        pos = end + 1;
+      } else {
+        pos++;
+      }
+    }
+    if (items.length > 0) return { items, isPartial: true };
+  }
+
+  // Fallback: {"transactions":[...]} wrapper
+  for (let i = 0; i < stripped.length; i++) {
+    if (stripped[i] !== '{') continue;
+    const close = findMatchingClose(stripped, i, '{', '}');
+    if (close < 0) continue;
+    try {
+      const obj = JSON.parse(stripped.slice(i, close + 1)) as Record<string, unknown>;
+      const arr = Object.values(obj).find(v => Array.isArray(v) && (v as unknown[]).length > 0);
+      if (arr) return { items: arr as unknown[], isPartial: false };
+    } catch { /* try next */ }
+  }
+
+  return { items: [], isPartial: false };
+}
+
+export async function parseFileWithGemini(file: File): Promise<ParseFileResult> {
   if (!env.GEMINI_API_KEY) {
     throw new Error('Не задан VITE_GEMINI_API_KEY в .env.local.');
   }
 
   const arrayBuffer = await file.arrayBuffer();
-  // Use Uint8Array chunks to avoid call stack overflow on large files
   const bytes = new Uint8Array(arrayBuffer);
   const chunkSize = 8192;
   const chunks: string[] = [];
@@ -353,13 +471,35 @@ export async function parseFileWithGemini(file: File): Promise<ParsedImportTrans
   const mimeType = file.type || 'application/octet-stream';
 
   const today = new Date().toISOString().split('T')[0];
-  const prompt = [
-    'Извлеки все финансовые транзакции из этого документа (банковская выписка).',
-    'Верни ТОЛЬКО валидный JSON массив без markdown и пояснений.',
-    `Формат каждого элемента: {"date":"YYYY-MM-DD","description":"строка","amount":число,"type":"income" или "expense"}`,
-    'amount — всегда положительное число. type: income (поступление/зачисление) или expense (расход/списание/оплата).',
-    `Если дата не указана, используй ${today}. Если транзакций нет — верни [].`,
-  ].join('\n');
+
+  // Compact format: each entry is [date, description, amount, "e"/"i"]
+  // 3x fewer tokens than full JSON objects — critical for large bank statements
+  const prompt = `This is a Kaspi Bank (Kazakhstan) statement in Russian. Extract real financial transactions as a compact JSON array.
+
+Return ONLY raw JSON array — no markdown, no text outside the array.
+Format: [["YYYY-MM-DD","description",amount,"e"]] where e=expense, i=income
+
+CRITICAL FILTERING — EXCLUDE these (they are internal Kaspi transfers, not real money movement):
+- Any row containing "Поступление со своего счета" AND "Kaspi Депозита" → SKIP
+- Any row containing "Перевод на свой счет" AND "Kaspi Депозит" (but NOT "Оплата Kaspi Кредита") → SKIP
+
+INCLUDE as real transactions:
+- "Покупка" → e (purchase/expense)
+- "Снятие" → e (cash withdrawal)
+- "Разное" (commissions, fees) → e
+- "Перевод" to another person (not to own account) → e
+- "Перевод на свой счет Оплата Kaspi Кредита" → e (loan payment, real expense)
+- "Пополнение" from another person → i (incoming transfer = income)
+- "С карты другого банка" → i
+- "Поступление" from another bank or person → i
+
+Date format in document: DD.MM.YY → convert to YYYY-MM-DD (year prefix: 20)
+Amount: ignore ₸ symbol and spaces, use positive number only.
+Description: keep short (MAX 35 chars), use merchant/person name.
+
+Example output: [["2026-04-27","Avtobys",110,"e"],["2026-04-26","Ералы С.",10000,"i"],["2026-04-25","Комиссия перевод",200,"e"]]
+
+If no real transactions: []`;
 
   const model = env.GEMINI_MODEL || 'gemini-2.0-flash';
   const controller = new AbortController();
@@ -380,37 +520,68 @@ export async function parseFileWithGemini(file: File): Promise<ParsedImportTrans
               { text: prompt },
             ],
           }],
-          // responseMimeType omitted — incompatible with multimodal (inline_data) requests
-          generationConfig: { maxOutputTokens: 4000, temperature: 0 },
+          generationConfig: { maxOutputTokens: 8192, temperature: 0 },
         }),
       }
     );
 
     if (!response.ok) {
       const errBody = await response.json().catch(() => null) as { error?: { message?: string } } | null;
-      const apiMsg = errBody?.error?.message;
-      throw new Error(apiMsg ?? mapGeminiError(response.status));
+      const rawMsg = errBody?.error?.message ?? '';
+      const retrySecs = extractRetrySeconds(rawMsg);
+      throw new Error(mapGeminiError(response.status, retrySecs) || rawMsg);
     }
 
     const data = await response.json();
-    const text = extractGeminiText(data);
-    const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
-    const start = cleaned.indexOf('[');
-    const end = cleaned.lastIndexOf(']');
-    if (start < 0 || end <= start) return [];
+    const rawText = extractGeminiText(data);
 
-    const parsed = JSON.parse(cleaned.slice(start, end + 1)) as unknown[];
-    return (parsed as Record<string, unknown>[])
-      .filter(item => typeof item === 'object' && item !== null)
-      .map(item => ({
-        date: typeof item['date'] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item['date'] as string)
-          ? (item['date'] as string)
-          : today,
-        description: typeof item['description'] === 'string' ? (item['description'] as string) : '',
-        amount: typeof item['amount'] === 'number' ? Math.abs(item['amount'] as number) : 0,
-        type: (item['type'] === 'income' ? 'income' : 'expense') as 'income' | 'expense',
-      }))
+    if (import.meta.env.DEV) {
+      console.log('[parseFileWithGemini] raw response:', rawText.slice(0, 300));
+    }
+
+    if (isGeminiErrorText(rawText)) {
+      throw new Error(rawText);
+    }
+
+    const { items, isPartial } = extractItems(rawText);
+    if (items.length === 0) {
+      if (import.meta.env.DEV) {
+        console.error('[parseFileWithGemini] no items extracted from:', rawText.slice(0, 300));
+      }
+      throw new Error('AI не смог распознать транзакции в файле. Попробуйте другой формат (скриншот или изображение вместо PDF).');
+    }
+
+    const parseAmount = (v: unknown): number => {
+      if (typeof v === 'number') return Math.abs(v);
+      if (typeof v === 'string') return Math.abs(parseFloat(v.replace(/\s/g, '').replace(',', '.')) || 0);
+      return 0;
+    };
+
+    const transactions = items
+      .map(item => {
+        if (Array.isArray(item)) {
+          // Compact format: [date, description, amount, "e"/"i"]
+          const [d, n, a, t] = item as [unknown, unknown, unknown, unknown];
+          return {
+            date: typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d) ? d : today,
+            description: typeof n === 'string' ? n : '',
+            amount: parseAmount(a),
+            type: (t === 'i' ? 'income' : 'expense') as 'income' | 'expense',
+          };
+        }
+        // Full object format (fallback)
+        const obj = item as Record<string, unknown>;
+        const rawDate = typeof obj['date'] === 'string' ? obj['date'] as string : '';
+        return {
+          date: /^\d{4}-\d{2}-\d{2}$/.test(rawDate) ? rawDate : today,
+          description: typeof obj['description'] === 'string' ? obj['description'] as string : '',
+          amount: parseAmount(obj['amount']),
+          type: (obj['type'] === 'income' ? 'income' : 'expense') as 'income' | 'expense',
+        };
+      })
       .filter(item => item.amount > 0);
+
+    return { transactions, isPartial };
   } finally {
     clearTimeout(timer);
   }
