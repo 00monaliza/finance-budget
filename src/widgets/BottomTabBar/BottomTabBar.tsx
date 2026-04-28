@@ -14,16 +14,17 @@ export function BottomTabBar() {
   return (
     <nav
       aria-label="Основная навигация"
-      className="fixed bottom-0 left-0 right-0 z-40 flex border-t border-white/10 bg-[rgba(13,27,38,0.95)] backdrop-blur-xl lg:hidden"
+      className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-[rgba(13,27,38,0.95)] backdrop-blur-xl"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
+      <div className="mx-auto flex w-full max-w-2xl">
       {TABS.map(({ to, icon: Icon, label }) => (
         <NavLink
           key={to}
           to={to}
           className={({ isActive }) =>
             cn(
-              'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors',
+              'flex flex-1 flex-col items-center gap-1 py-2.5 text-[10px] font-medium transition-colors sm:text-xs sm:py-3',
               isActive ? 'text-[#5DCAA5]' : 'text-white/45 hover:text-white/70'
             )
           }
@@ -36,6 +37,7 @@ export function BottomTabBar() {
           )}
         </NavLink>
       ))}
+      </div>
     </nav>
   );
 }

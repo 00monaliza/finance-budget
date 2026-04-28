@@ -329,11 +329,91 @@ function safeParseIntent(raw: string): ChatCommandIntent {
   }
 }
 
-// Keyword pre-filter: if message contains an action verb, force command routing.
-// Note: \b doesn't work for Cyrillic in JS regex, so we use (?:^|\s|,) boundaries.
+export type ParsedImportTransaction = {
+  date: string;
+  description: string;
+  amount: number;
+  type: 'income' | 'expense';
+};
+
+export async function parseFileWithGemini(file: File): Promise<ParsedImportTransaction[]> {
+  if (!env.GEMINI_API_KEY) {
+    throw new Error('Не задан VITE_GEMINI_API_KEY в .env.local.');
+  }
+
+  const arrayBuffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(arrayBuffer);
+  let binary = '';
+  for (let i = 0; i < bytes.byteLength; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  const base64 = btoa(binary);
+  const mimeType = file.type || 'application/octet-stream';
+
+  const today = new Date().toISOString().split('T')[0];
+  const prompt = [
+    'Извлеки все финансовые транзакции из этого документа (банковская выписка).',
+    'Верни ТОЛЬКО валидный JSON массив без markdown и пояснений.',
+    `Формат каждого элемента: {"date":"YYYY-MM-DD","description":"строка","amount":число,"type":"income" или "expense"}`,
+    'amount — всегда положительное число. type: income (поступление/зачисление) или expense (расход/списание/оплата).',
+    `Если дата не указана, используй ${today}. Если транзакций нет — верни [].`,
+  ].join('\n');
+
+  const model = env.GEMINI_MODEL || 'gemini-flash-latest';
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 45_000);
+
+  try {
+    const response = await fetch(
+      `${GEMINI_API_BASE}/${model}:generateContent?key=${env.GEMINI_API_KEY}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
+        body: JSON.stringify({
+          contents: [{
+            role: 'user',
+            parts: [
+              { inline_data: { mime_type: mimeType, data: base64 } },
+              { text: prompt },
+            ],
+          }],
+          generationConfig: { maxOutputTokens: 4000, temperature: 0, responseMimeType: 'application/json' },
+        }),
+      }
+    );
+
+    if (!response.ok) throw new Error(mapGeminiError(response.status));
+
+    const data = await response.json();
+    const text = extractGeminiText(data);
+    const cleaned = text.trim().replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```$/i, '').trim();
+    const start = cleaned.indexOf('[');
+    const end = cleaned.lastIndexOf(']');
+    if (start < 0 || end <= start) return [];
+
+    const parsed = JSON.parse(cleaned.slice(start, end + 1)) as unknown[];
+    return (parsed as Record<string, unknown>[])
+      .filter(item => typeof item === 'object' && item !== null)
+      .map(item => ({
+        date: typeof item['date'] === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item['date'] as string)
+          ? (item['date'] as string)
+          : today,
+        description: typeof item['description'] === 'string' ? (item['description'] as string) : '',
+        amount: typeof item['amount'] === 'number' ? Math.abs(item['amount'] as number) : 0,
+        type: (item['type'] === 'income' ? 'income' : 'expense') as 'income' | 'expense',
+      }))
+      .filter(item => item.amount > 0);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 const COMMAND_PATTERNS: Array<{ re: RegExp; intent: ChatCommandIntent['intent'] }> = [
   { re: /(создай|создать|добавь|добавить|запиши|записать).{0,60}(цель|накопл|копил)/i, intent: 'create_goal' },
   { re: /(цель|накопл|копил).{0,60}(создай|создать|добавь|добавить)/i, intent: 'create_goal' },
+  { re: /(создай|создать|добавь|добавить|установи|установить|поставь|поставить).{0,50}(бюджет)/i, intent: 'update_budget_limit' },
+  { re: /(бюджет).{0,50}(создай|создать|добавь|добавить|установи|установить)/i, intent: 'update_budget_limit' },
   { re: /(создай|создать|добавь|добавить|запиши|записать).{0,40}(расход|трату|трат|покупк)/i, intent: 'create_transaction' },
   { re: /(создай|создать|добавь|добавить|запиши|записать).{0,40}(доход|зарплат|поступлен)/i, intent: 'create_transaction' },
   { re: /(потратил|заплатила|заплатил|купил|купила|оплатил|оплатила|получил|получила).{0,120}\d/i, intent: 'create_transaction' },

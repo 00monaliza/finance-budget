@@ -14,10 +14,10 @@ interface QuickAIPanelProps {
   isOpen: boolean;
   onClose: () => void;
   anchorRef: React.RefObject<HTMLButtonElement | null>;
-  placement?: 'below' | 'above';
+  placement?: 'dropdown' | 'above';
 }
 
-export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) {
+export function QuickAIPanel({ isOpen, onClose, anchorRef, placement = 'dropdown' }: QuickAIPanelProps) {
   const { user } = useAuthStore();
   const [input, setInput] = useState('');
   const [activeChip, setActiveChip] = useState<string | null>(null);
@@ -92,7 +92,11 @@ export function QuickAIPanel({ isOpen, onClose, anchorRef }: QuickAIPanelProps) 
   return (
     <div
       ref={panelRef}
-      className="absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.96)] shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-xl"
+      className={
+        placement === 'above'
+          ? 'absolute right-0 bottom-full z-50 mb-3 w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.96)] shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-xl'
+          : 'absolute right-0 top-full z-50 mt-2 w-[min(20rem,calc(100vw-1.5rem))] overflow-hidden rounded-2xl border border-white/12 bg-[rgba(13,27,38,0.96)] shadow-[0_16px_48px_rgba(0,0,0,0.5)] backdrop-blur-xl'
+      }
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">

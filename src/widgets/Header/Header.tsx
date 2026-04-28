@@ -1,11 +1,10 @@
-import { useState, useRef } from 'react';
-import { Bell, Plus, X, AlertTriangle, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, Plus, X, AlertTriangle } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '@/entities/user';
 import { useBudgetAlerts } from '@/features/ai-analysis';
 import { formatCurrency } from '@/shared/lib/formatCurrency';
 import { cn } from '@/shared/lib/cn';
-import { QuickAIPanel } from '@/widgets/QuickAIPanel';
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard':        'Главная',
@@ -26,8 +25,6 @@ export function Header() {
   const { user } = useAuthStore();
   const alerts = useBudgetAlerts();
   const [showAlerts, setShowAlerts] = useState(false);
-  const [showAIPanel, setShowAIPanel] = useState(false);
-  const aiButtonRef = useRef<HTMLButtonElement>(null);
 
   const title = PAGE_TITLES[pathname] ?? 'Bonssai';
   const name = user?.user_metadata?.full_name ?? user?.email ?? '';
@@ -44,19 +41,6 @@ export function Header() {
       <h1 className="truncate text-base font-semibold text-white">{title}</h1>
 
       <div className="flex items-center gap-1.5 sm:gap-2.5">
-        <div className="relative">
-          <button
-            ref={aiButtonRef}
-            type="button"
-            onClick={() => setShowAIPanel(v => !v)}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-[#DA7B93]/50 bg-[#DA7B93]/10 px-2.5 py-2 text-sm font-medium text-[#DA7B93] transition-colors hover:bg-[#DA7B93]/20 sm:px-3"
-          >
-            <Sparkles size={14} />
-            <span className="hidden sm:inline text-xs">AI</span>
-          </button>
-          <QuickAIPanel isOpen={showAIPanel} onClose={() => setShowAIPanel(false)} anchorRef={aiButtonRef} />
-        </div>
-
         <Link
           to="/transactions/new"
           className="inline-flex items-center gap-1.5 rounded-xl bg-[#5DCAA5] px-2.5 py-2 text-sm font-medium text-[#0d1b26] transition-colors hover:bg-[#71d9b6] sm:px-4"

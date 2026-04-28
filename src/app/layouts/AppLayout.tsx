@@ -1,9 +1,15 @@
+import { useRef, useState } from 'react';
 import { Outlet } from 'react-router-dom';
+import { Sparkles } from 'lucide-react';
 import { Header } from '@/widgets/Header';
 import { BottomTabBar } from '@/widgets/BottomTabBar';
+import { QuickAIPanel } from '@/widgets/QuickAIPanel';
 import { ParticleBackground } from '@/shared/ui';
 
 export function AppLayout() {
+  const [showAIPanel, setShowAIPanel] = useState(false);
+  const aiFabRef = useRef<HTMLButtonElement>(null);
+
   return (
     <div className="flex h-dvh flex-col overflow-hidden bg-[#0d1b26]">
       <Header />
@@ -15,6 +21,26 @@ export function AppLayout() {
           <Outlet />
         </div>
       </main>
+
+      {/* AI FAB */}
+      <div className="fixed bottom-[4.5rem] right-4 z-40 sm:right-6">
+        <button
+          ref={aiFabRef}
+          type="button"
+          onClick={() => setShowAIPanel(v => !v)}
+          className="flex h-12 w-12 items-center justify-center rounded-full border border-[#DA7B93]/50 bg-[rgba(13,27,38,0.92)] shadow-[0_4px_20px_rgba(218,123,147,0.35)] backdrop-blur-md transition-all hover:scale-105 hover:shadow-[0_4px_28px_rgba(218,123,147,0.55)] active:scale-95"
+          aria-label="Открыть AI-ассистент"
+        >
+          <Sparkles size={20} className="text-[#DA7B93]" />
+        </button>
+        <QuickAIPanel
+          isOpen={showAIPanel}
+          onClose={() => setShowAIPanel(false)}
+          anchorRef={aiFabRef}
+          placement="above"
+        />
+      </div>
+
       <BottomTabBar />
     </div>
   );
